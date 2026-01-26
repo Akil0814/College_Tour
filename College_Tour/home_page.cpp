@@ -5,6 +5,7 @@ HomePage::HomePage(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::HomePage)
 {
+    this->setWindowIcon(QIcon(":/res/Saddleback.png"));
     ui->setupUi(this);
 }
 
