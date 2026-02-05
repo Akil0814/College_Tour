@@ -40,7 +40,8 @@ Thumbs.db
 *.pro.user*
 *.qbs.user*
 CMakeLists.txt.user*
-# CMake user-specific presets (local machine)
+# CMake user-specific presets
+CMakePresets.json
 CMakeUserPresets.json
 
 
