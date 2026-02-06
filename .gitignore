@@ -87,3 +87,8 @@ CMakeUserPresets.json
 .uic/
 /build*/
 out/
+
+# sqlite database files
+*.db
+*.sqlite
+*.sqlite3

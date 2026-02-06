@@ -13,17 +13,15 @@ struct souvenir
     int souvenir_id= -1;
     QString souvenir_name;
 
-    int college_belong_id = -1;
-    QString college_belong_name;
+    int owner_college_id = -1;
 
     double price = 0.0;
 };
 
-struct neighbor_distance
+struct distance_to
 {
     int to_college_id = -1;
-    QString to_college_name;
-    double miles_to_college = 0.0;
+    double miles = 0.0;
 };
 
 
