@@ -15,10 +15,11 @@ int main(int argc, char *argv[])
 
     DataManager::instance()->test_manager();
 
-    //if (!DataManager::instance()->init())
-        //throw std::runtime_error("DataManager init failed");
+    if (!DataManager::instance()->init())
+        throw std::runtime_error("DataManager init failed");
 
-    DataManager::instance()->test_manager();
+    auto data_manager = DataManager::instance();
+    data_manager->test_manager();
 
     //-------------------test Data Manager--------------------------//
 

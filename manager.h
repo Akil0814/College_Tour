@@ -22,6 +22,9 @@
     };
 
     Then:
+        auto manager_ptr=SomethingManager::instance();
+        manager_ptr->SomeFunc();
+     or:
         SomethingManager::instance()->SomeFunc();
 */
 

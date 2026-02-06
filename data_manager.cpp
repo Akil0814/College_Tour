@@ -41,21 +41,43 @@ bool DataManager::init()
     return true;
 }
 
+
 bool DataManager::open_db()
 {
-    QDir exeDir(QCoreApplication::applicationDirPath());
+    std::cout << "1-1.Opening the database" << std::endl;
+    m_last_error.clear();
 
-    // Go up a few levels to reach the project root (adjust if your build tree differs)
-    exeDir.cdUp(); // Desktop_...-Debug
-    exeDir.cdUp(); // build
-    exeDir.cdUp(); // College_Tour (project root)  <-- adjust if needed
+    QDir dir(QDir::current());
 
-    if (!exeDir.cd("data")) {
-        m_last_error = "Cannot find project data folder from: " + exeDir.absolutePath();
-        return false;
+    QString data_dir_path;
+    for (int i = 0; i < 8; ++i)
+    {
+        const QString candidate = dir.filePath("data");
+        if (QDir(candidate).exists())
+        {
+            data_dir_path = QDir(candidate).absolutePath();
+            break;
+        }
+
+        const QString candidate2 = dir.filePath("College_Tour/data");
+        if (QDir(candidate2).exists())
+        {
+            data_dir_path = QDir(candidate2).absolutePath();
+            break;
+        }
+
+        if (!dir.cdUp())
+            break;
     }
 
-    m_db_path = exeDir.filePath("college_tour.db");
+    if (data_dir_path.isEmpty())
+    {
+        const QString fallback = QDir::current().filePath("data");
+        QDir().mkpath(fallback);
+        data_dir_path = QDir(fallback).absolutePath();
+    }
+
+    m_db_path = QDir(data_dir_path).filePath("college_tour.db");
 
     QSqlDatabase db = QSqlDatabase::contains(m_conn_name)
         ? QSqlDatabase::database(m_conn_name)
@@ -63,208 +85,197 @@ bool DataManager::open_db()
 
     db.setDatabaseName(m_db_path);
 
-    if (!db.open()) {
+    if (!db.open())
+    {
         m_last_error = db.lastError().text();
         return false;
     }
+
+    std::cout << "1-2.Opening the database" << std::endl;
+
     return true;
 }
 
 bool DataManager::init_pragmas()
 {
-    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
-    QSqlQuery q(db);
+    std::cout <<"2-1 Configuring runtime parameters" << std::endl;
 
-    if (!q.exec("PRAGMA foreign_keys = ON;"))
+    m_last_error.clear();
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
+    if (!db.isValid() || !db.isOpen())
     {
-        m_last_error = q.lastError().text();
+        m_last_error = "Database is not open.";
         return false;
     }
 
-    q.exec("PRAGMA journal_mode = WAL;");
+    QSqlQuery q(db);
+
+    auto exec_sql = [&](const QString& sql) -> bool
+        {
+            if (!q.exec(sql))
+            {
+                m_last_error = q.lastError().text() + " | SQL: " + sql;
+                return false;
+            }
+            return true;
+        };
+
+    if (!exec_sql("PRAGMA foreign_keys = ON;"))
+        return false;
+
+    if (!q.exec("PRAGMA journal_mode = WAL;"))
+    {
+        if (!q.exec("PRAGMA journal_mode = DELETE;"))
+        {
+            m_last_error = q.lastError().text() + " | SQL: PRAGMA journal_mode";
+            return false;
+        }
+    }
+
+    if (!exec_sql("PRAGMA synchronous = NORMAL;"))
+        return false;
+
+    if (!exec_sql("PRAGMA temp_store = MEMORY;"))
+        return false;
+
+    db.setConnectOptions("QSQLITE_BUSY_TIMEOUT=5000");
+
+    std::cout << "2-2 Configuring runtime parameters" << std::endl;
 
     return true;
 }
 
 bool DataManager::init_schema()
 {
+    std::cout <<"3-1 Building the table structure"<< std::endl;
+    m_last_error.clear();
+
     QSqlDatabase db = QSqlDatabase::database(m_conn_name);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
     QSqlQuery q(db);
 
-    if (!db.transaction()) {
-        m_last_error = db.lastError().text();
+    auto exec_sql = [&](const QString& sql) -> bool
+        {
+            if (!q.exec(sql))
+            {
+                m_last_error = q.lastError().text() + " | SQL: " + sql;
+                return false;
+            }
+            return true;
+        };
+
+    // campus
+    if (!exec_sql(
+        "create table if not exists campus ("
+        "    campus_id integer primary key autoincrement,"
+        "    name text not null unique"
+        ");"))
         return false;
-    }
 
-    // 1) campus
-    if (!exec_sql(q, m_last_error, R"sql(
-        CREATE TABLE IF NOT EXISTS campus(
-            id   INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE
-        );
-    )sql")) {
-        db.rollback(); return false;
-    }
-
-    // 2) distance (store only one row for an undirected pair: (a,b) where a < b)
-    if (!exec_sql(q, m_last_error, R"sql(
-        CREATE TABLE IF NOT EXISTS distance(
-            a     INTEGER NOT NULL,
-            b     INTEGER NOT NULL,
-            miles REAL    NOT NULL CHECK(miles >= 0),
-            PRIMARY KEY(a, b),
-            FOREIGN KEY(a) REFERENCES campus(id) ON DELETE CASCADE,
-            FOREIGN KEY(b) REFERENCES campus(id) ON DELETE CASCADE,
-            CHECK(a < b)
-        );
-    )sql")) {
-        db.rollback(); return false;
-    }
-
-    // 3) souvenir
-    if (!exec_sql(q, m_last_error, R"sql(
-        CREATE TABLE IF NOT EXISTS souvenir(
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            campus_id  INTEGER NOT NULL,
-            name       TEXT    NOT NULL,
-            price_cents INTEGER NOT NULL CHECK(price_cents >= 0),
-            UNIQUE(campus_id, name),
-            FOREIGN KEY(campus_id) REFERENCES campus(id) ON DELETE CASCADE
-        );
-    )sql")) {
-        db.rollback(); return false;
-    }
-
-    // 4) purchase (order)
-    if (!exec_sql(q, m_last_error, R"sql(
-        CREATE TABLE IF NOT EXISTS purchase(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-    )sql")) {
-        db.rollback(); return false;
-    }
-
-    // 5) purchase_item (order lines)
-    if (!exec_sql(q, m_last_error, R"sql(
-        CREATE TABLE IF NOT EXISTS purchase_item(
-            purchase_id INTEGER NOT NULL,
-            souvenir_id INTEGER NOT NULL,
-            qty INTEGER NOT NULL CHECK(qty > 0),
-            price_cents INTEGER NOT NULL CHECK(price_cents >= 0),
-            PRIMARY KEY(purchase_id, souvenir_id),
-            FOREIGN KEY(purchase_id) REFERENCES purchase(id) ON DELETE CASCADE,
-            FOREIGN KEY(souvenir_id) REFERENCES souvenir(id) ON DELETE RESTRICT
-        );
-    )sql")) {
-        db.rollback(); return false;
-    }
-
-    // Helpful indexes (optional, but cheap)
-    exec_sql(q, m_last_error, "CREATE INDEX IF NOT EXISTS idx_souvenir_campus ON souvenir(campus_id);");
-    exec_sql(q, m_last_error, "CREATE INDEX IF NOT EXISTS idx_purchase_item_pid ON purchase_item(purchase_id);");
-
-    if (!db.commit()) {
-        m_last_error = db.lastError().text();
-        db.rollback();
+    // souvenir
+    if (!exec_sql(
+        "create table if not exists souvenir ("
+        "    souvenir_id integer primary key autoincrement,"
+        "    campus_id integer not null,"
+        "    name text not null,"
+        "    price real not null check(price >= 0),"
+        "    foreign key(campus_id) references campus(campus_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    unique(campus_id, name)"
+        ");"))
         return false;
-    }
+
+    if (!exec_sql("create index if not exists idx_souvenir_campus_id on souvenir(campus_id);"))
+        return false;
+
+    // distance (store undirected edge once: a_campus_id < b_campus_id)
+    if (!exec_sql(
+        "create table if not exists distance ("
+        "    a_campus_id integer not null,"
+        "    b_campus_id integer not null,"
+        "    miles real not null check(miles >= 0),"
+        "    primary key(a_campus_id, b_campus_id),"
+        "    foreign key(a_campus_id) references campus(campus_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    foreign key(b_campus_id) references campus(campus_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    check(a_campus_id < b_campus_id)"
+        ");"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_distance_a on distance(a_campus_id);"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_distance_b on distance(b_campus_id);"))
+        return false;
+
+    // trip
+    if (!exec_sql(
+        "create table if not exists trip ("
+        "    trip_id integer primary key autoincrement,"
+        "    start_campus_id integer not null,"
+        "    created_at text not null default (datetime('now')),"
+        "    total_miles real not null default 0 check(total_miles >= 0),"
+        "    foreign key(start_campus_id) references campus(campus_id)"
+        "        on delete restrict"
+        "        on update cascade"
+        ");"))
+        return false;
+
+    // purchase
+    if (!exec_sql(
+        "create table if not exists purchase ("
+        "    trip_id integer not null,"
+        "    campus_id integer not null,"
+        "    souvenir_id integer not null,"
+        "    quantity integer not null check(quantity > 0),"
+        "    unit_price real not null check(unit_price >= 0),"
+        "    primary key(trip_id, souvenir_id),"
+        "    foreign key(trip_id) references trip(trip_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    foreign key(campus_id) references campus(campus_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    foreign key(souvenir_id) references souvenir(souvenir_id)"
+        "        on delete cascade"
+        "        on update cascade"
+        ");"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_purchase_trip_id on purchase(trip_id);"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_purchase_campus_id on purchase(campus_id);"))
+        return false;
+
+    std::cout << "3-2 Building the table structure" << std::endl;
 
     return true;
 }
 
 bool DataManager::seed_if_empty()
 {
-    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
-    QSqlQuery q(db);
-
-    // 1) If campus already has data, assume seeding was done before.
-    if (!q.exec("SELECT 1 FROM campus LIMIT 1;")) {
-        m_last_error = q.lastError().text();
-        return false;
-    }
-    if (q.next()) {
-        return true; // not empty -> no seeding
-    }
-
-    // 2) Seed within a transaction (all or nothing).
-    if (!db.transaction()) {
-        m_last_error = db.lastError().text();
-        return false;
-    }
-
-    auto fail = [&](const QSqlQuery& qq) {
-        m_last_error = qq.lastError().text();
-        db.rollback();
-        return false;
-        };
-
-    // Insert campuses
-    QSqlQuery insCampus(db);
-    if (!insCampus.prepare("INSERT INTO campus(name) VALUES(?);")) return fail(insCampus);
-
-    const QStringList campuses = { "UCI", "UCLA", "UCSD" };
-    for (const QString& name : campuses) {
-        insCampus.addBindValue(name);
-        if (!insCampus.exec()) return fail(insCampus);
-    }
-
-    // Helper: get campus id by name
-    auto getCampusId = [&](const QString& name) -> int {
-        QSqlQuery qq(db);
-        qq.prepare("SELECT id FROM campus WHERE name=?;");
-        qq.addBindValue(name);
-        if (!qq.exec() || !qq.next()) return -1;
-        return qq.value(0).toInt();
-        };
-
-    const int uci = getCampusId("UCI");
-    const int ucla = getCampusId("UCLA");
-    const int ucsd = getCampusId("UCSD");
-    if (uci < 0 || ucla < 0 || ucsd < 0) {
-        m_last_error = "seed_if_empty: failed to fetch campus ids";
-        db.rollback();
-        return false;
-    }
-
-    // Insert distances (store only (a,b) where a < b)
-    auto upsertDistance = [&](int x, int y, double miles) -> bool {
-        const int a = std::min(x, y);
-        const int b = std::max(x, y);
-        QSqlQuery qq(db);
-        qq.prepare("INSERT OR REPLACE INTO distance(a,b,miles) VALUES(?,?,?);");
-        qq.addBindValue(a);
-        qq.addBindValue(b);
-        qq.addBindValue(miles);
-        if (!qq.exec()) return fail(qq);
-        return true;
-        };
-
-    if (!upsertDistance(uci, ucla, 45.0))  return false;
-    if (!upsertDistance(uci, ucsd, 80.0))  return false;
-    if (!upsertDistance(ucla, ucsd, 120.0)) return false;
-
-    // Insert souvenirs
-    auto addSouvenir = [&](int campusId, const QString& item, int priceCents) -> bool {
-        QSqlQuery qq(db);
-        qq.prepare("INSERT INTO souvenir(campus_id, name, price_cents) VALUES(?,?,?);");
-        qq.addBindValue(campusId);
-        qq.addBindValue(item);
-        qq.addBindValue(priceCents);
-        if (!qq.exec()) return fail(qq);
-        return true;
-        };
-
-    if (!addSouvenir(uci, "Sticker", 299))  return false;
-    if (!addSouvenir(uci, "T-Shirt", 1999)) return false;
-    if (!addSouvenir(ucla, "Mug", 1299)) return false;
-    if (!addSouvenir(ucsd, "Hoodie", 4999)) return false;
-
-    if (!db.commit()) {
-        m_last_error = db.lastError().text();
-        db.rollback();
-        return false;
-    }
+    std::cout <<"Loading data"<<std::endl;
 
     return true;
+}
+
+bool DataManager::is_open() const
+{
+    if (!QSqlDatabase::contains(m_conn_name))
+        return false;
+
+    const QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+
+    return db.isValid() && db.isOpen();
 }
