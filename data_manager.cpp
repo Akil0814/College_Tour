@@ -1,5 +1,107 @@
 #include "data_manager.h"
 
+bool DataManager::init()
+{
+    if (m_init_ed)
+        return true;
+
+    if (!open_db())
+        return false;
+
+    if (!init_pragmas())
+        return false;
+
+    if (!init_schema())
+        return false;
+
+    if (!seed_if_empty())
+        return false;
+
+    m_init_ed = true;
+
+    return true;
+}
+
+bool DataManager::is_open() const
+{
+    if (!QSqlDatabase::contains(m_conn_name))
+        return false;
+
+    const QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+
+    return db.isValid() && db.isOpen();
+}
+
+QString DataManager::last_error() const 
+{
+    return m_last_error;
+}
+
+QVector<college> DataManager::get_all_colleges() const
+{
+    QVector<college> out;
+
+    QSqlDatabase db = get_db_or_set_error();
+
+    if (!db.isValid())
+        return out;
+
+    QSqlQuery q(db);
+    const QString sql =
+        "select college_id, name "
+        "from college " 
+        "order by college_id;";
+
+    if (!prepare_and_exec(q, sql))
+        return out;
+
+
+    while (q.next())
+    {
+        college c;
+        c.college_id = q.value(0).toInt();
+        c.name = q.value(1).toString();
+        out.push_back(c);
+    }
+
+    return out;
+
+}
+
+QVector<souvenir> DataManager::get_all_souvenirs() const
+{
+    QVector<souvenir> out;
+
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return out;
+
+    QSqlQuery q(db);
+
+    const QString sql =
+        "select souvenir_id, college_id, name, price "
+        "from souvenir "
+        "order by college_id, souvenir_id;";
+
+    if (!prepare_and_exec(q, sql))
+        return out;
+
+    while (q.next())
+    {
+        souvenir s;
+        s.souvenir_id = q.value(0).toInt();
+        s.owner_college_id = q.value(1).toInt();
+        s.name = q.value(2).toString();
+        s.price = q.value(3).toDouble();
+        out.push_back(s);
+    }
+
+    return out;
+}
+
+
+//-----------------private-----------------//
+
 static QStringList parse_csv_line(const QString& line)
 {
     QStringList out;
@@ -91,27 +193,7 @@ static bool parse_money_to_double(QString s, double& out_price)
     return true;
 }
 
-bool DataManager::init()
-{
-    if (m_init_ed)
-        return true;
-
-    if (!open_db())
-        return false;
-
-    if (!init_pragmas())
-        return false;
-
-    if (!init_schema())
-        return false;
-
-    if (!seed_if_empty())
-        return false;
-
-    m_init_ed = true;
-
-    return true;
-}
+//-----------------private-----------------//
 
 bool DataManager::open_db()
 {
@@ -567,13 +649,37 @@ bool DataManager::seed_if_empty()
     return true;
 }
 
-bool DataManager::is_open() const
+QSqlDatabase DataManager::get_db_or_set_error() const
 {
     if (!QSqlDatabase::contains(m_conn_name))
-        return false;
+    {
+        m_last_error = "database connection not found";
+        return {};
+    }
 
-    const QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "database is not open";
+        return {};
+    }
 
-    return db.isValid() && db.isOpen();
+    return db;
 }
 
+bool DataManager::prepare_and_exec(QSqlQuery& q, const QString& sql) const
+{
+    if (!q.prepare(sql))
+    {
+        m_last_error = "prepare failed: " + q.lastError().text() + " | sql=" + sql;
+        return false;
+    }
+
+    if (!q.exec())
+    {
+        m_last_error = "exec failed: " + q.lastError().text() + " | sql=" + sql;
+        return false;
+    }
+
+    return true;
+}

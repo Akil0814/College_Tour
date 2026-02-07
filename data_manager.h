@@ -126,13 +126,17 @@ private:
     bool init_schema();
     bool seed_if_empty();
 
+    QSqlDatabase get_db_or_set_error() const;
+    bool prepare_and_exec(QSqlQuery& q, const QString& sql) const;
+
+
 private:
 
     bool m_init_ed = false;
 
     QString m_conn_name = "main";
     QString m_db_path;
-    QString m_last_error;
+    mutable QString m_last_error;
 };
 
 #endif // DATA_MANAGER_H

@@ -11,7 +11,7 @@ struct college
 struct souvenir
 {
     int souvenir_id= -1;
-    QString souvenir_name;
+    QString name;
 
     int owner_college_id = -1;
 
