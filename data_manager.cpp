@@ -398,6 +398,8 @@ bool DataManager::init_schema()
 
     QSqlQuery q(db);
 
+
+    std::cout << "out put 1:" << std::endl;
     q.exec("PRAGMA table_info(souvenir);");
     while (q.next())
     {
@@ -416,6 +418,13 @@ bool DataManager::init_schema()
         };
 
     // college
+    std::cout << "out put 2:" << std::endl;
+    q.exec("PRAGMA table_info(souvenir);");
+    while (q.next())
+    {
+        qDebug() << q.value(1).toString();
+    }
+
     std::cout << "3-college Building the table structure" << std::endl;
     if (!exec_sql(
         "create table if not exists college ("
@@ -425,6 +434,13 @@ bool DataManager::init_schema()
         return false;
 
     // souvenir
+    std::cout << "out put 3:" << std::endl;
+    q.exec("PRAGMA table_info(souvenir);");
+    while (q.next())
+    {
+        qDebug() << q.value(1).toString();
+    }
+
     std::cout << "3-souvir Building the table structure" << std::endl;
     if (!exec_sql(
         "create table if not exists souvenir ("
@@ -443,6 +459,13 @@ bool DataManager::init_schema()
         return false;
 
     // distance (store undirected edge once: a_college_id < b_college_id)
+    std::cout << "out put 4:" << std::endl;
+    q.exec("PRAGMA table_info(souvenir);");
+    while (q.next())
+    {
+        qDebug() << q.value(1).toString();
+    }
+
     std::cout << "3-dis Building the table structure" << std::endl;
     if (!exec_sql(
         "create table if not exists distance ("
@@ -467,6 +490,13 @@ bool DataManager::init_schema()
         return false;
 
     // trip
+    std::cout << "out put 5:" << std::endl;
+    q.exec("PRAGMA table_info(souvenir);");
+    while (q.next())
+    {
+        qDebug() << q.value(1).toString();
+    }
+
     if (!exec_sql(
         "create table if not exists trip ("
         "    trip_id integer primary key autoincrement,"
@@ -509,6 +539,8 @@ bool DataManager::init_schema()
 
 
     q.exec("PRAGMA table_info(souvenir);");
+
+    std::cout << "end:" << std::endl;
     while (q.next())
     {
         qDebug() << q.value(1).toString();
