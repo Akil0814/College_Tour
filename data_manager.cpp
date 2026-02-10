@@ -388,6 +388,7 @@ bool DataManager::init_schema()
     std::cout <<"3-1 Building the table structure"<< std::endl;
     m_last_error.clear();
 
+
     QSqlDatabase db = QSqlDatabase::database(m_conn_name);
     if (!db.isValid() || !db.isOpen())
     {
@@ -396,6 +397,13 @@ bool DataManager::init_schema()
     }
 
     QSqlQuery q(db);
+
+    q.exec("PRAGMA table_info(souvenir);");
+    while (q.next())
+    {
+        qDebug() << q.value(1).toString();
+    }
+
 
     auto exec_sql = [&](const QString& sql) -> bool
         {
@@ -497,6 +505,14 @@ bool DataManager::init_schema()
 
     if (!exec_sql("create index if not exists idx_purchase_college_id on purchase(college_id);"))
         return false;
+
+
+
+    q.exec("PRAGMA table_info(souvenir);");
+    while (q.next())
+    {
+        qDebug() << q.value(1).toString();
+    }
 
     std::cout << "3-2 Building the table structure" << std::endl;
 
