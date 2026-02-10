@@ -45,13 +45,13 @@ public:
 
 public:
     //initializes database
-    bool init();
+    [[nodiscard]] bool init();
 
     //returns whether the database connection is currently open and usable
-    bool is_open() const;
+    [[nodiscard]] bool is_open() const;
 
     //returns the last error message produced by a failed database operation
-    QString last_error() const;
+    [[nodiscard]] QString last_error() const;
 
     //-------------------------------related to colleges getter-------------------------------------//
     
@@ -128,6 +128,9 @@ private:
 
     QSqlDatabase get_db_or_set_error() const;
     bool prepare_and_exec(QSqlQuery& q, const QString& sql) const;
+    bool prepare_or_set_error(QSqlQuery& q, const QString& sql) const;
+    bool exec_or_set_error(QSqlQuery& q) const;
+
 
 
 private:

@@ -99,6 +99,92 @@ QVector<souvenir> DataManager::get_all_souvenirs() const
     return out;
 }
 
+std::optional<int> DataManager::get_college_id(const QString& college_name) const
+{
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return std::nullopt;
+
+    QSqlQuery q(db);
+
+    const QString sql =
+        "select college_id "
+        "from college  "
+        "where name = :college_name collate nocase "
+        "limit 1;";
+
+    if (!prepare_or_set_error(q, sql))
+        return std::nullopt;
+
+    q.bindValue(":college_name", college_name);
+
+    if (!exec_or_set_error(q))
+        return std::nullopt;
+
+    if (!q.next())
+        return std::nullopt;
+
+    return q.value(0).toInt();
+}
+
+std::optional<QString>  DataManager::get_college_name(int college_id) const
+{
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return std::nullopt;
+
+    QSqlQuery q(db);
+
+    const QString sql =
+        "select name "
+        "from college  "
+        "where college_id = :college_id "
+        "limit 1;";
+
+    if (!prepare_or_set_error(q, sql))
+        return std::nullopt;
+
+    q.bindValue(":college_id", college_id);
+
+    if (!exec_or_set_error(q))
+        return std::nullopt;
+
+    if (!q.next())
+        return std::nullopt;
+
+    return q.value(0).toString();
+
+}
+
+QVector<distance_to> DataManager::get_distances_from_college(int college_id) const
+{
+    QVector<distance_to> out;
+
+    QSqlDatabase db = get_db_or_set_error();
+
+    if (!db.isValid())
+        return out;
+
+    QSqlQuery q(db);
+    const QString sql =
+        "select a_college_id, b_college_id "
+        "from distances "
+        "order by college_id;";
+
+
+    while (q.next())
+    {
+        distance_to d;
+        d.to_college_id = q.value(0).toInt();
+        d.miles = q.value(1).toDouble();
+        out.push_back(d);
+    }
+
+
+    return out;
+}
+
+
 
 //-----------------private-----------------//
 
@@ -192,8 +278,6 @@ static bool parse_money_to_double(QString s, double& out_price)
     out_price = v;
     return true;
 }
-
-//-----------------private-----------------//
 
 bool DataManager::open_db()
 {
@@ -324,6 +408,7 @@ bool DataManager::init_schema()
         };
 
     // college
+    std::cout << "3-college Building the table structure" << std::endl;
     if (!exec_sql(
         "create table if not exists college ("
         "    college_id integer primary key autoincrement,"
@@ -332,6 +417,7 @@ bool DataManager::init_schema()
         return false;
 
     // souvenir
+    std::cout << "3-souvir Building the table structure" << std::endl;
     if (!exec_sql(
         "create table if not exists souvenir ("
         "    souvenir_id integer primary key autoincrement,"
@@ -349,6 +435,7 @@ bool DataManager::init_schema()
         return false;
 
     // distance (store undirected edge once: a_college_id < b_college_id)
+    std::cout << "3-dis Building the table structure" << std::endl;
     if (!exec_sql(
         "create table if not exists distance ("
         "    a_college_id integer not null,"
@@ -681,5 +768,25 @@ bool DataManager::prepare_and_exec(QSqlQuery& q, const QString& sql) const
         return false;
     }
 
+    return true;
+}
+
+bool DataManager::prepare_or_set_error(QSqlQuery& q, const QString& sql) const
+{
+    if (!q.prepare(sql))
+    {
+        m_last_error = q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+bool DataManager::exec_or_set_error(QSqlQuery& q) const
+{
+    if (!q.exec())
+    {
+        m_last_error = q.lastError().text();
+        return false;
+    }
     return true;
 }
