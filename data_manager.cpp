@@ -161,16 +161,24 @@ QVector<distance_to> DataManager::get_distances_from_college(int college_id) con
     QVector<distance_to> out;
 
     QSqlDatabase db = get_db_or_set_error();
-
     if (!db.isValid())
         return out;
 
     QSqlQuery q(db);
-    const QString sql =
-        "select a_college_id, b_college_id "
-        "from distances "
-        "order by college_id;";
 
+    const QString sql =
+        "select to_college_id, miles "
+        "from distance "
+        "where from_college_id = :id "
+        "order by to_college_id;";
+
+    if (!prepare_or_set_error(q, sql))
+        return out;
+
+    q.bindValue(":id", college_id);
+
+    if (!exec_or_set_error(q))
+        return out;
 
     while (q.next())
     {
@@ -179,7 +187,6 @@ QVector<distance_to> DataManager::get_distances_from_college(int college_id) con
         d.miles = q.value(1).toDouble();
         out.push_back(d);
     }
-
 
     return out;
 }
@@ -458,7 +465,7 @@ bool DataManager::init_schema()
     if (!exec_sql("create index if not exists idx_souvenir_college_id on souvenir(college_id);"))
         return false;
 
-    // distance (store undirected edge once: a_college_id < b_college_id)
+    // distance (directed edge: keep A->B and B->A separately when both exist)
     //std::cout << "out put 4:" << std::endl;
     //q.exec("PRAGMA table_info(souvenir);");
     //while (q.next())
@@ -467,26 +474,87 @@ bool DataManager::init_schema()
     //}
 
     std::cout << "3-dis Building the table structure" << std::endl;
-    if (!exec_sql(
+    const QString create_distance_sql =
         "create table if not exists distance ("
-        "    a_college_id integer not null,"
-        "    b_college_id integer not null,"
+        "    from_college_id integer not null,"
+        "    to_college_id integer not null,"
         "    miles real not null check(miles >= 0),"
-        "    primary key(a_college_id, b_college_id),"
-        "    foreign key(a_college_id) references college(college_id)"
+        "    primary key(from_college_id, to_college_id),"
+        "    foreign key(from_college_id) references college(college_id)"
         "        on delete cascade"
         "        on update cascade,"
-        "    foreign key(b_college_id) references college(college_id)"
+        "    foreign key(to_college_id) references college(college_id)"
         "        on delete cascade"
         "        on update cascade,"
-        "    check(a_college_id < b_college_id)"
-        ");"))
+        "    check(from_college_id <> to_college_id)"
+        ");";
+
+    bool has_distance_table = false;
+    QSet<QString> distance_cols;
+    if (!q.exec("PRAGMA table_info(distance);"))
+    {
+        m_last_error = q.lastError().text() + " | SQL: PRAGMA table_info(distance);";
+        return false;
+    }
+    while (q.next())
+    {
+        has_distance_table = true;
+        distance_cols.insert(q.value(1).toString());
+    }
+
+    const bool has_legacy_schema =
+        distance_cols.contains("a_college_id") &&
+        distance_cols.contains("b_college_id");
+    const bool has_directed_schema =
+        distance_cols.contains("from_college_id") &&
+        distance_cols.contains("to_college_id");
+
+    if (!has_distance_table)
+    {
+        if (!exec_sql(create_distance_sql))
+            return false;
+    }
+    else if (has_legacy_schema)
+    {
+        if (!db.transaction())
+        {
+            m_last_error = db.lastError().text();
+            return false;
+        }
+
+        auto rollback_schema = [&]() -> bool
+            {
+                m_last_error = q.lastError().text();
+                db.rollback();
+                return false;
+            };
+
+        if (!q.exec("alter table distance rename to distance_old;"))
+            return rollback_schema();
+
+        if (!q.exec(create_distance_sql))
+            return rollback_schema();
+
+        if (!q.exec("drop table distance_old;"))
+            return rollback_schema();
+
+        if (!db.commit())
+        {
+            m_last_error = db.lastError().text();
+            db.rollback();
+            return false;
+        }
+    }
+    else if (!has_directed_schema)
+    {
+        m_last_error = "Unsupported distance table schema.";
+        return false;
+    }
+
+    if (!exec_sql("create index if not exists idx_distance_from on distance(from_college_id);"))
         return false;
 
-    if (!exec_sql("create index if not exists idx_distance_a on distance(a_college_id);"))
-        return false;
-
-    if (!exec_sql("create index if not exists idx_distance_b on distance(b_college_id);"))
+    if (!exec_sql("create index if not exists idx_distance_to on distance(to_college_id);"))
         return false;
 
     // trip
@@ -563,19 +631,38 @@ bool DataManager::seed_if_empty()
         return false;
     }
 
-    // already seeded?
-    {
-        QSqlQuery q(db);
-        if (!q.exec("select count(*) from college;"))
+    // already seeded? all three core tables must have data.
+    auto table_has_rows = [&](const char* table_name, bool& has_rows) -> bool
         {
-            m_last_error = q.lastError().text();
-            return false;
-        }
-        if (q.next() && q.value(0).toInt() > 0)
-        {
-            std::cout << "4-2 Loading data" << std::endl;
+            QSqlQuery q(db);
+            if (!q.exec(QString("select count(*) from %1;").arg(table_name)))
+            {
+                m_last_error = q.lastError().text();
+                return false;
+            }
+            if (!q.next())
+            {
+                m_last_error = "count query returned no row";
+                return false;
+            }
+            has_rows = q.value(0).toInt() > 0;
             return true;
-        }
+        };
+
+    bool has_college_rows = false;
+    bool has_souvenir_rows = false;
+    bool has_distance_rows = false;
+    if (!table_has_rows("college", has_college_rows))
+        return false;
+    if (!table_has_rows("souvenir", has_souvenir_rows))
+        return false;
+    if (!table_has_rows("distance", has_distance_rows))
+        return false;
+
+    if (has_college_rows && has_souvenir_rows && has_distance_rows)
+    {
+        std::cout << "4-2 Loading data" << std::endl;
+        return true;
     }
 
     // data dir comes from db path: .../data/college_tour.db
@@ -725,12 +812,12 @@ bool DataManager::seed_if_empty()
         }
     }
 
-    // 6) insert distances (undirected: store (min_id, max_id))
+    // 6) insert distances (directed: only dedupe exact same from->to pair)
     {
         QSqlQuery up(db);
         const QString sql =
-            "insert into distance(a_college_id, b_college_id, miles) values(?, ?, ?) "
-            "on conflict(a_college_id, b_college_id) do update set miles=excluded.miles;";
+            "insert into distance(from_college_id, to_college_id, miles) values(?, ?, ?) "
+            "on conflict(from_college_id, to_college_id) do update set miles=excluded.miles;";
         if (!up.prepare(sql))
             return rollback_with(up.lastError().text());
 
@@ -763,9 +850,6 @@ bool DataManager::seed_if_empty()
 
             if (a_id == b_id)
                 continue;
-
-            if (a_id > b_id)
-                std::swap(a_id, b_id);
 
             up.bindValue(0, a_id);
             up.bindValue(1, b_id);
