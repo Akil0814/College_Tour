@@ -3,7 +3,28 @@
 #include "home_page.h"
 #include "data_manager.h"
 
-#include"data_types.h"//using for data_base_test()
+void data_base_test();//testing only
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    HomePage window;
+    window.show();
+
+    //init database
+    if (!DataManager::instance()->init())
+    {
+        qDebug() << "DataManager init failed:" << DataManager::instance()->last_error();
+        throw std::runtime_error("DataManager init failed");
+    }
+
+    //-------------------test Data Manager--------------------------//
+    data_base_test();//used for quick debugging/smoke testing; comment out once everything works.
+    //-------------------test Data Manager--------------------------//
+
+    return a.exec();
+}
+
 
 //-------------------testing Database--------------------------//
 void data_base_test()
@@ -79,23 +100,3 @@ void data_base_test()
     data_manager->test_manager();
 }
 //-------------------testing Database--------------------------//
-
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-    HomePage window;
-    window.show();
-
-    //init database
-    if (!DataManager::instance()->init())
-    {
-        qDebug() << "DataManager init failed:" << DataManager::instance()->last_error();
-        throw std::runtime_error("DataManager init failed");
-    }
-
-    //-------------------test Data Manager--------------------------//
-    data_base_test();//used for quick debugging/smoke testing; comment out once everything works.
-    //-------------------test Data Manager--------------------------//
-
-    return a.exec();
-}
