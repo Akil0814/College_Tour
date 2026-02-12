@@ -167,9 +167,13 @@ QVector<distance_to> DataManager::get_distances_from_college(int college_id) con
     QSqlQuery q(db);
 
     const QString sql =
-        "select to_college_id, miles "
-        "from distance "
-        "where from_college_id = :id "
+        "select b_college_id as to_college_id, miles "
+        "from distances "
+        "where a_college_id = :id "
+        "union all "
+        "select a_college_id as to_college_id, miles "
+        "from distances "
+        "where b_college_id = :id "
         "order by to_college_id;";
 
     if (!prepare_or_set_error(q, sql))
@@ -189,6 +193,98 @@ QVector<distance_to> DataManager::get_distances_from_college(int college_id) con
     }
 
     return out;
+}
+
+std::optional<double> DataManager::get_distance_between_college(int college_id_1, int college_id_2) const
+{
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return std::nullopt;
+
+    QSqlQuery q(db);
+
+    const QString sql =
+        "select miles "
+        "from distance "
+        "where (a_college_id = :a and b_college_id = :b) "
+        "   or (a_college_id = :b and b_college_id = :a) "
+        "limit 1;";
+
+    if (!prepare_or_set_error(q, sql))
+        return std::nullopt;
+
+    q.bindValue(":a", college_id_1);
+    q.bindValue(":b", college_id_2);
+
+    if (!exec_or_set_error(q))
+        return std::nullopt;
+
+    if (!q.next())
+        return std::nullopt;
+
+    return q.value(0).toDouble();
+}
+
+std::optional<double> DataManager::get_distance_between_college(const QString& college_name_1, const QString& college_name_2) const
+{
+    auto id_1 = get_college_id(college_name_1);
+    if (!id_1)
+        return std::nullopt;
+
+    auto id_2 = get_college_id(college_name_2);
+    if (!id_2)
+        return std::nullopt;
+
+    int _id_1 = id_1.value();
+    int _id_2 = id_2.value();
+
+    return get_distance_between_college(_id_1, _id_2);
+}
+
+QVector<souvenir> DataManager::get_all_souvenirs_from_college(int college_id) const
+{
+    QVector<souvenir> out;
+
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return out;
+
+    QSqlQuery q(db);
+
+    const QString sql =
+        "select souvenir_id, college_id, name, price "
+        "from souvenir "
+        "where college_id = :college_id "
+        "order by souvenir_id;";
+
+    if (!prepare_or_set_error(q, sql))
+        return out;
+
+    q.bindValue(":college_id", college_id);
+
+    if (!exec_or_set_error(q))
+        return out;
+
+    while (q.next())
+    {
+        souvenir s;
+        s.souvenir_id = q.value(0).toInt();
+        s.owner_college_id = q.value(1).toInt();
+        s.name = q.value(2).toString();
+        s.price = q.value(3).toDouble();
+        out.push_back(s);
+    }
+
+    return out;
+}
+
+QVector<souvenir>  DataManager::get_all_souvenirs_from_college(const QString& college_name) const
+{
+    auto id = get_college_id(college_name);
+    if (!id)
+        return {};
+    
+    return get_all_souvenirs_from_college(id.value());
 }
 
 
