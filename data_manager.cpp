@@ -168,11 +168,11 @@ QVector<distance_to> DataManager::get_distances_from_college(int college_id) con
 
     const QString sql =
         "select b_college_id as to_college_id, miles "
-        "from distances "
+        "from distance "
         "where a_college_id = :id "
         "union all "
         "select a_college_id as to_college_id, miles "
-        "from distances "
+        "from distance "
         "where b_college_id = :id "
         "order by to_college_id;";
 
@@ -287,6 +287,69 @@ QVector<souvenir>  DataManager::get_all_souvenirs_from_college(const QString& co
     return get_all_souvenirs_from_college(id.value());
 }
 
+std::optional<int> DataManager::get_souvenir_id(int college_id, const QString& souvenir_name) const
+{
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return std::nullopt;
+
+    QSqlQuery q(db);
+
+    const QString sql =
+        "select souvenir_id "
+        "from souvenir "
+        "where college_id = :college_id "
+        "  and name = :souvenir_name collate nocase "
+        "limit 1;";
+
+    if (!prepare_or_set_error(q, sql))
+        return std::nullopt;
+
+    q.bindValue(":college_id", college_id);
+    q.bindValue(":souvenir_name", souvenir_name);
+
+    if (!exec_or_set_error(q))
+        return std::nullopt;
+
+    if (!q.next())
+        return std::nullopt;
+
+    return q.value(0).toInt();
+}
+
+std::optional<souvenir> DataManager::get_souvenir(int souvenir_id) const
+{
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return std::nullopt;
+
+    QSqlQuery q(db);
+
+    const QString sql =
+        "select souvenir_id, college_id, name, price "
+        "from souvenir "
+        "where souvenir_id = :souvenir_id "
+        "limit 1;";
+
+    if (!prepare_or_set_error(q, sql))
+        return std::nullopt;
+
+    q.bindValue(":souvenir_id", souvenir_id);
+
+    if (!exec_or_set_error(q))
+        return std::nullopt;
+
+    if (!q.next())
+        return std::nullopt;
+
+    souvenir s;
+    s.souvenir_id = q.value(0).toInt();
+    s.owner_college_id = q.value(1).toInt();
+    s.name = q.value(2).toString();
+    s.price = q.value(3).toDouble();
+
+    return s;
+}
 
 
 //-----------------private-----------------//
@@ -572,17 +635,17 @@ bool DataManager::init_schema()
     std::cout << "3-dis Building the table structure" << std::endl;
     const QString create_distance_sql =
         "create table if not exists distance ("
-        "    from_college_id integer not null,"
-        "    to_college_id integer not null,"
+        "    a_college_id integer not null,"
+        "    b_college_id integer not null,"
         "    miles real not null check(miles >= 0),"
-        "    primary key(from_college_id, to_college_id),"
-        "    foreign key(from_college_id) references college(college_id)"
+        "    primary key(a_college_id, b_college_id),"
+        "    foreign key(a_college_id) references college(college_id)"
         "        on delete cascade"
         "        on update cascade,"
-        "    foreign key(to_college_id) references college(college_id)"
+        "    foreign key(b_college_id) references college(college_id)"
         "        on delete cascade"
         "        on update cascade,"
-        "    check(from_college_id <> to_college_id)"
+        "    check(a_college_id <> b_college_id)"
         ");";
 
     bool has_distance_table = false;
@@ -598,10 +661,10 @@ bool DataManager::init_schema()
         distance_cols.insert(q.value(1).toString());
     }
 
-    const bool has_legacy_schema =
+    const bool has_ab_schema =
         distance_cols.contains("a_college_id") &&
         distance_cols.contains("b_college_id");
-    const bool has_directed_schema =
+    const bool has_from_to_schema =
         distance_cols.contains("from_college_id") &&
         distance_cols.contains("to_college_id");
 
@@ -610,7 +673,7 @@ bool DataManager::init_schema()
         if (!exec_sql(create_distance_sql))
             return false;
     }
-    else if (has_legacy_schema)
+    else if (has_from_to_schema)
     {
         if (!db.transaction())
         {
@@ -631,6 +694,12 @@ bool DataManager::init_schema()
         if (!q.exec(create_distance_sql))
             return rollback_schema();
 
+        if (!q.exec(
+            "insert into distance(a_college_id, b_college_id, miles) "
+            "select from_college_id, to_college_id, miles "
+            "from distance_old;"))
+            return rollback_schema();
+
         if (!q.exec("drop table distance_old;"))
             return rollback_schema();
 
@@ -641,16 +710,16 @@ bool DataManager::init_schema()
             return false;
         }
     }
-    else if (!has_directed_schema)
+    else if (!has_ab_schema)
     {
         m_last_error = "Unsupported distance table schema.";
         return false;
     }
 
-    if (!exec_sql("create index if not exists idx_distance_from on distance(from_college_id);"))
+    if (!exec_sql("create index if not exists idx_distance_a on distance(a_college_id);"))
         return false;
 
-    if (!exec_sql("create index if not exists idx_distance_to on distance(to_college_id);"))
+    if (!exec_sql("create index if not exists idx_distance_b on distance(b_college_id);"))
         return false;
 
     // trip
@@ -908,12 +977,12 @@ bool DataManager::seed_if_empty()
         }
     }
 
-    // 6) insert distances (directed: only dedupe exact same from->to pair)
+    // 6) insert distances (dedupe exact same a->b pair)
     {
         QSqlQuery up(db);
         const QString sql =
-            "insert into distance(from_college_id, to_college_id, miles) values(?, ?, ?) "
-            "on conflict(from_college_id, to_college_id) do update set miles=excluded.miles;";
+            "insert into distance(a_college_id, b_college_id, miles) values(?, ?, ?) "
+            "on conflict(a_college_id, b_college_id) do update set miles=excluded.miles;";
         if (!up.prepare(sql))
             return rollback_with(up.lastError().text());
 
