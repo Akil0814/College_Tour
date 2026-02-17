@@ -1,5 +1,20 @@
 <RCC>
     <qresource prefix="/res">
         <file>res/Saddleback.png</file>
+        <file>res/Arizona State University.png</file>
+        <file>res/California State University, Fullerton.png</file>
+        <file>res/College Campus Distances and Souvenirs.xlsx</file>
+        <file>res/Massachusetts Institute of Technology (MIT).png</file>
+        <file>res/Northwestern.png</file>
+        <file>res/Ohio State University.png</file>
+        <file>res/souvenir_icon.png</file>
+        <file>res/title.png</file>
+        <file>res/University of  Michigan.png</file>
+        <file>res/University of California, Irvine (UCI).png</file>
+        <file>res/University of California, Los Angeles (UCLA).png</file>
+        <file>res/University of Oregon.png</file>
+        <file>res/University of Texas.png</file>
+        <file>res/University of the Pacific.png</file>
+        <file>res/University of Wisconsin.png</file>
     </qresource>
 </RCC>
