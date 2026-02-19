@@ -1,9 +1,8 @@
 #include <QApplication>
-
 #include "home_page.h"
 #include "data_manager.h"
 
-void data_base_test();//testing only
+void data_base_test(); // testing only
 
 int main(int argc, char *argv[])
 {
@@ -11,7 +10,7 @@ int main(int argc, char *argv[])
     HomePage window;
     window.show();
 
-    //init database
+    // init database
     if (!DataManager::instance()->init())
     {
         qDebug() << "DataManager init failed:" << DataManager::instance()->last_error();
@@ -19,12 +18,22 @@ int main(int argc, char *argv[])
     }
 
     //-------------------test Data Manager--------------------------//
-    data_base_test();//used for quick debugging/smoke testing; comment out once everything works.
+    // data_base_test();//used for quick debugging/smoke testing; comment out once everything works.
     //-------------------test Data Manager--------------------------//
+    auto data_manager = DataManager::instance();
+    Qvector<int> temp_ids = {1, 2, 3, 4};
+    Qvector<int> visit_order;
+    double total_distance;
+
+    visitNext(data_manager.get_college_id("Saddleback College"), temp_ids, visit_order, total_distance, data_manager);
+
+    for (int i = 0; i < visit_order.size(); i++)
+    {
+        std::cout << visit_order[i];
+    }
 
     return a.exec();
 }
-
 
 //-------------------testing Database--------------------------//
 void data_base_test()
@@ -44,8 +53,8 @@ void data_base_test()
         // Fail fast: stop the test early if the database is not available.
         // last_error() should contain reason (open failed, missing file, bad path, etc.).
         std::cerr << "database is not open: "
-            << data_manager->last_error().toStdString()
-            << std::endl;
+                  << data_manager->last_error().toStdString()
+                  << std::endl;
         return;
     }
 
@@ -53,7 +62,7 @@ void data_base_test()
     QVector<college> college_list = data_manager->get_all_colleges();
 
     // Print each college record (id + name).
-    for (auto& iter : college_list)
+    for (auto &iter : college_list)
         std::cout << iter.college_id << " " << iter.name.toStdString() << std::endl;
 
     // Print the last error message (empty if no error).
@@ -91,11 +100,11 @@ void data_base_test()
     QVector<souvenir> souvenir_list = data_manager->get_all_souvenirs();
 
     // Print each souvenir record (owner college id, souvenir id, name, price).
-    for (auto& iter : souvenir_list)
+    for (auto &iter : souvenir_list)
         std::cout << "from college:" << iter.owner_college_id << " "
-        << iter.souvenir_id << " "
-        << iter.name.toStdString()
-        << iter.price << std::endl;
+                  << iter.souvenir_id << " "
+                  << iter.name.toStdString()
+                  << iter.price << std::endl;
 
     data_manager->test_manager();
 }
