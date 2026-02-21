@@ -351,6 +351,399 @@ std::optional<souvenir> DataManager::get_souvenir(int souvenir_id) const
     return s;
 }
 
+//----------------------------------------------------test need-----------------------------------------------------------
+
+bool DataManager::delete_college(int college_id)
+{
+    m_last_error.clear();
+
+    if (!QSqlDatabase::contains(m_conn_name))
+    {
+        m_last_error = "database connection not found";
+        return false;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
+    if (!db.transaction())
+    {
+        m_last_error = db.lastError().text();
+        return false;
+    }
+
+    QSqlQuery q(db);
+    const QString sql =
+        "delete from college "
+        "where college_id = :college_id;";
+
+    if (!q.prepare(sql))
+    {
+        m_last_error = q.lastError().text() + " | SQL: " + sql;
+        db.rollback();
+        return false;
+    }
+
+    q.bindValue(":college_id", college_id);
+
+    if (!q.exec())
+    {
+        m_last_error = q.lastError().text() + " | SQL: " + sql;
+        db.rollback();
+        return false;
+    }
+
+    if (q.numRowsAffected() <= 0)
+    {
+        m_last_error = "college id not found";
+        db.rollback();
+        return false;
+    }
+
+    if (!db.commit())
+    {
+        m_last_error = db.lastError().text();
+        db.rollback();
+        return false;
+    }
+
+    return true;
+}
+
+std::optional<int> DataManager::add_college(const QString& new_college_name)
+{
+    m_last_error.clear();
+
+    if (!QSqlDatabase::contains(m_conn_name))
+    {
+        m_last_error = "database connection not found";
+        return std::nullopt;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return std::nullopt;
+    }
+
+    const QString name = new_college_name.trimmed();
+    if (name.isEmpty())
+    {
+        m_last_error = "college name is empty";
+        return std::nullopt;
+    }
+
+    if (!db.transaction())
+    {
+        m_last_error = db.lastError().text();
+        return std::nullopt;
+    }
+
+    {
+        QSqlQuery ins(db);
+        const QString sql =
+            "insert into college (name) "
+            "values (:name);";
+
+        if (!ins.prepare(sql))
+        {
+            m_last_error = ins.lastError().text() + " | SQL: " + sql;
+            db.rollback();
+            return std::nullopt;
+        }
+
+        ins.bindValue(":name", name);
+
+        if (ins.exec())
+        {
+            const QVariant idv = ins.lastInsertId();
+            if (!db.commit())
+            {
+                m_last_error = db.lastError().text();
+                db.rollback();
+                return std::nullopt;
+            }
+            return idv.toInt();
+        }
+
+        const QString err = ins.lastError().text();
+
+        if (err.contains("UNIQUE", Qt::CaseInsensitive) ||
+            err.contains("constraint failed", Qt::CaseInsensitive))
+        {
+            QSqlQuery sel(db);
+            const QString qsql =
+                "select college_id "
+                "from college "
+                "where name = :name "
+                "limit 1;";
+
+            if (sel.prepare(qsql))
+            {
+                sel.bindValue(":name", name);
+                if (sel.exec() && sel.next())
+                {
+                    const int existing_id = sel.value(0).toInt();
+                    db.rollback(); // we didn't change anything
+                    return existing_id;
+                }
+            }
+
+            m_last_error = "college already exists, but failed to fetch its id";
+            db.rollback();
+            return std::nullopt;
+        }
+
+        m_last_error = err + " | SQL: " + sql;
+        db.rollback();
+        return std::nullopt;
+    }
+}
+
+bool DataManager::set_distance_between_college(int college_id_1, int college_id_2, double miles)
+{
+    m_last_error.clear();
+
+    if (!QSqlDatabase::contains(m_conn_name))
+    {
+        m_last_error = "database connection not found";
+        return false;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
+    if (college_id_1 == college_id_2)
+    {
+        m_last_error = "cannot set distance to itself";
+        return false;
+    }
+
+    if (miles < 0.0)
+    {
+        m_last_error = "miles must be >= 0";
+        return false;
+    }
+
+    const int a = std::min(college_id_1, college_id_2);
+    const int b = std::max(college_id_1, college_id_2);
+
+    if (!db.transaction())
+    {
+        m_last_error = db.lastError().text();
+        return false;
+    }
+
+    QSqlQuery q(db);
+    const QString sql =
+        "insert into distance (a_college_id, b_college_id, miles) "
+        "values (:a, :b, :miles) "
+        "on conflict(a_college_id, b_college_id) do update set "
+        "miles = excluded.miles;";
+
+    if (!q.prepare(sql))
+    {
+        m_last_error = q.lastError().text() + " | SQL: " + sql;
+        db.rollback();
+        return false;
+    }
+
+    q.bindValue(":a", a);
+    q.bindValue(":b", b);
+    q.bindValue(":miles", miles);
+
+    if (!q.exec())
+    {
+        m_last_error = q.lastError().text() + " | SQL: " + sql;
+        db.rollback();
+        return false;
+    }
+
+    if (!db.commit())
+    {
+        m_last_error = db.lastError().text();
+        db.rollback();
+        return false;
+    }
+
+    return true;
+}
+
+std::optional<int> DataManager::add_souvenir(const souvenir& s)
+{   
+    return add_souvenir(s.owner_college_id,s.name,s.price);
+}
+
+std::optional<int> DataManager::add_souvenir(int college_id, const QString& name, double price)
+{
+    m_last_error.clear();
+
+    if (!QSqlDatabase::contains(m_conn_name))
+    {
+        m_last_error = "database connection not found";
+        return std::nullopt;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return std::nullopt;
+    }
+
+    const QString clean_name = name.trimmed();
+    if (clean_name.isEmpty())
+    {
+        m_last_error = "souvenir name is empty";
+        return std::nullopt;
+    }
+
+    if (price < 0.0)
+    {
+        m_last_error = "price must be >= 0";
+        return std::nullopt;
+    }
+
+    if (!db.transaction())
+    {
+        m_last_error = db.lastError().text();
+        return std::nullopt;
+    }
+
+    {
+        QSqlQuery ins(db);
+        const QString sql =
+            "insert into souvenir (college_id, name, price) "
+            "values (:college_id, :name, :price);";
+
+        if (!ins.prepare(sql))
+        {
+            m_last_error = ins.lastError().text() + " | SQL: " + sql;
+            db.rollback();
+            return std::nullopt;
+        }
+
+        ins.bindValue(":college_id", college_id);
+        ins.bindValue(":name", clean_name);
+        ins.bindValue(":price", price);
+
+        if (ins.exec())
+        {
+            const QVariant idv = ins.lastInsertId();
+            if (!db.commit())
+            {
+                m_last_error = db.lastError().text();
+                db.rollback();
+                return std::nullopt;
+            }
+            return idv.toInt();
+        }
+
+        const QString err = ins.lastError().text();
+
+        if (err.contains("UNIQUE", Qt::CaseInsensitive) ||
+            err.contains("constraint failed", Qt::CaseInsensitive))
+        {
+            QSqlQuery sel(db);
+            const QString qsql =
+                "select souvenir_id "
+                "from souvenir "
+                "where college_id = :college_id and name = :name "
+                "limit 1;";
+
+            if (sel.prepare(qsql))
+            {
+                sel.bindValue(":college_id", college_id);
+                sel.bindValue(":name", clean_name);
+
+                if (sel.exec() && sel.next())
+                {
+                    const int existing_id = sel.value(0).toInt();
+                    db.rollback(); // no changes committed
+                    return existing_id;
+                }
+            }
+
+            m_last_error = "souvenir already exists, but failed to fetch its id";
+            db.rollback();
+            return std::nullopt;
+        }
+
+        m_last_error = err + " | SQL: " + sql;
+        db.rollback();
+        return std::nullopt;
+    }
+}
+
+bool DataManager::delete_souvenir(int souvenir_id)
+{
+    m_last_error.clear();
+
+    if (!QSqlDatabase::contains(m_conn_name))
+    {
+        m_last_error = "database connection not found";
+        return false;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
+    if (!db.transaction())
+    {
+        m_last_error = db.lastError().text();
+        return false;
+    }
+
+    QSqlQuery q(db);
+    const QString sql =
+        "delete from souvenir "
+        "where souvenir_id = :souvenir_id;";
+
+    if (!q.prepare(sql))
+    {
+        m_last_error = q.lastError().text() + " | SQL: " + sql;
+        db.rollback();
+        return false;
+    }
+
+    q.bindValue(":souvenir_id", souvenir_id);
+
+    if (!q.exec())
+    {
+        m_last_error = q.lastError().text() + " | SQL: " + sql;
+        db.rollback();
+        return false;
+    }
+
+    if (q.numRowsAffected() <= 0)
+    {
+        m_last_error = "souvenir id not found";
+        db.rollback();
+        return false;
+    }
+
+    if (!db.commit())
+    {
+        m_last_error = db.lastError().text();
+        db.rollback();
+        return false;
+    }
+
+    return true;
+}
 
 //-----------------private-----------------//
 

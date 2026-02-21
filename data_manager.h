@@ -109,11 +109,11 @@ public:
 
     //-------------------------------related to souvenir operational-------------------------------------//
 
-    //return true if successfully added
-    bool add_souvenir(const souvenir& s);
+    //return souvenir id if successfully added
+    std::optional<int> add_souvenir(const souvenir& s);
 
-    //return true if successfully added
-    bool add_souvenir(int college_id, const QString& name, double price);
+    //return souvenir id if successfully added
+    std::optional<int> add_souvenir(int college_id, const QString& name, double price);
 
     //return true if successfully deleted
     bool delete_souvenir(int souvenir_id);

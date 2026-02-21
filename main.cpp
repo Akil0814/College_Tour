@@ -17,20 +17,6 @@ int main(int argc, char *argv[])
         throw std::runtime_error("DataManager init failed");
     }
 
-    //-------------------test Data Manager--------------------------//
-    // data_base_test();//used for quick debugging/smoke testing; comment out once everything works.
-    //-------------------test Data Manager--------------------------//
-    auto data_manager = DataManager::instance();
-    Qvector<int> temp_ids = {1, 2, 3, 4};
-    Qvector<int> visit_order;
-    double total_distance;
-
-    visitNext(data_manager.get_college_id("Saddleback College"), temp_ids, visit_order, total_distance, data_manager);
-
-    for (int i = 0; i < visit_order.size(); i++)
-    {
-        std::cout << visit_order[i];
-    }
 
     return a.exec();
 }
