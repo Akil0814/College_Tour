@@ -51,9 +51,6 @@ void data_base_test()
     for (auto &iter : college_list)
         std::cout << iter.college_id << " " << iter.name.toStdString() << std::endl;
 
-    // Print the last error message (empty if no error).
-    std::cout << data_manager->last_error().toStdString() << std::endl;
-
     // ----------- Query: get college id by college name -----------
     auto id_ = data_manager->get_college_id("Saddleback College");
     if (id_)
@@ -63,10 +60,8 @@ void data_base_test()
         std::cout << id << std::endl;
     }
     else
-    {
         // std::optional is empty: name not found.
         std::cout << "cant find name" << std::endl;
-    }
 
     // ----------- Query: get college name by college id -----------
     auto name_ = data_manager->get_college_name(4);
@@ -77,10 +72,8 @@ void data_base_test()
         std::cout << name.toStdString() << std::endl;
     }
     else
-    {
         // Invalid id or missing record.
         std::cout << "cant find id" << std::endl;
-    }
 
     // ----------- Query: fetch all souvenirs -----------
     QVector<souvenir> souvenir_list = data_manager->get_all_souvenirs();
@@ -92,6 +85,5 @@ void data_base_test()
                   << iter.name.toStdString()
                   << iter.price << std::endl;
 
-    data_manager->test_manager();
 }
 //-------------------testing Database--------------------------//

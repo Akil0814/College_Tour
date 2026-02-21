@@ -110,9 +110,11 @@ public:
     //-------------------------------related to souvenir operational-------------------------------------//
 
     //return souvenir id if successfully added
+    //price check fail//wrong error message when college_id does not exist
     std::optional<int> add_souvenir(const souvenir& s);
 
     //return souvenir id if successfully added
+    //price check fail//wrong error message when college_id does not exist
     std::optional<int> add_souvenir(int college_id, const QString& name, double price);
 
     //return true if successfully deleted

@@ -351,8 +351,6 @@ std::optional<souvenir> DataManager::get_souvenir(int souvenir_id) const
     return s;
 }
 
-//----------------------------------------------------test need-----------------------------------------------------------
-
 bool DataManager::delete_college(int college_id)
 {
     m_last_error.clear();
@@ -583,6 +581,7 @@ std::optional<int> DataManager::add_souvenir(const souvenir& s)
     return add_souvenir(s.owner_college_id,s.name,s.price);
 }
 
+//price check fail//wrong error message when college_id does not exist
 std::optional<int> DataManager::add_souvenir(int college_id, const QString& name, double price)
 {
     m_last_error.clear();
