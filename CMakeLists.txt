@@ -19,6 +19,10 @@ qt_add_executable(College_Tour
     home_page.h
     homepage.ui
 
+    login_window.cpp
+    login_window.h
+    login_window.ui
+
     resources.qrc
 
     data_manager.cpp

@@ -6,69 +6,55 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>360</width>
-    <height>380</height>
+    <width>1943</width>
+    <height>832</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>16</width>
+    <height>16</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>College Tour</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">/* Red Sidebar with transparency */
+QFrame#sidebarFrame {
+    background-color: rgba(190, 40, 50, 235); /* A deeper, more professional red */
+    min-width: 450px; /* Ensures it's wide enough */
+}
+
+/* Main Title */
+QLabel {
+    color: white;
+    font-family: &quot;Segoe UI&quot;, sans-serif;
+}
+QLabel#titleLabel { /* Assign this objectName to your main title */
+    font-size: 42px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+QLabel#subHeadingLabel { /* Assign this objectName to your sub-heading */
+    font-size: 18px;
+}
+
+/* Modern 'Pill' Buttons */
+QPushButton {
+    background-color: white;
+    border: none;
+    border-radius: 25px;
+    color: #BE2832; /* Matches the sidebar color */
+    font-size: 16px;
+    font-weight: bold;
+    padding: 15px 40px;
+    margin-top: 20px;
+}
+QPushButton:hover {
+    background-color: #f2f2f2;
+}</string>
   </property>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>60</y>
-     <width>171</width>
-     <height>51</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:20pt; font-weight:700;&quot;&gt;College Tour&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-  </widget>
-  <widget class="QWidget" name="">
-   <property name="geometry">
-    <rect>
-     <x>60</x>
-     <y>140</y>
-     <width>231</width>
-     <height>151</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3">
-    <item>
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>PushButton</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="text">
-       <string>PushButton</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="pushButton_3">
-      <property name="text">
-       <string>PushButton</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="pushButton_4">
-      <property name="text">
-       <string>PushButton</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
  </widget>
  <resources/>
  <connections/>
