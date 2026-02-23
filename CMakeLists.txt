@@ -29,6 +29,7 @@ qt_add_executable(College_Tour
     data_manager.h
     manager.h
     data_types.h
+    admin.h admin.cpp
 )
 
 target_link_libraries(College_Tour PRIVATE
