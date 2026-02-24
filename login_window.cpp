@@ -74,6 +74,8 @@ login_window::~login_window() {
 
 
 std::string key_path = R"(C:\CS1D_P1\College_Tour\data\key.dat)";//change this path to local
+//user name: cs1d
+//password:abc
 //------------------------------------------ID_verify----------------------------------------------
 
 static constexpr std::uint32_t magic = 0x44533143u; // 'C''S''1''D' little-endian display
