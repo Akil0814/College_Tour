@@ -5,6 +5,17 @@
 #include <QLineEdit>
 #include <QLabel>
 
+//For ID_verify
+#include <string>
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <optional>
+//For ID_verify
+
+
 login_window::login_window(QWidget *parent)
     : QDialog(parent), ui(new Ui::login_window) {
 
