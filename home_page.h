@@ -9,7 +9,11 @@
 #include <QPushButton>
 #include <QSpacerItem>
 #include <QResizeEvent>
-#include "login_window.h"
+
+#include "shopping_cart.h"
+
+class CartTester; //added
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class HomePage; }
@@ -29,6 +33,7 @@ private slots:
     // These must match the names in your .cpp file exactly
     void on_student_button_clicked();
     void on_admin_button_clicked();
+    void on_add_item_button_clicked();
 
 private:
     Ui::HomePage *ui;
@@ -38,5 +43,12 @@ private:
     QLabel *subHeadingLabel;
     QPushButton *studentButton;
     QPushButton *adminButton;
+
+    QPushButton* addItemButton = nullptr; //added
+    QPushButton* grandTotalButton = nullptr; //added
+
+    ShoppingCart m_cart;
+    CartTester* m_cartTester = nullptr;
+
 };
 #endif

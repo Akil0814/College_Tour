@@ -1,5 +1,10 @@
 #include "login_window.h"
-#include "ui_login_window.h"
+// you can delete #include "ui_login_window.h" if you aren't using ui->setupUi
+
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QLineEdit>
@@ -20,7 +25,8 @@ bool id_verify(std::string i_user_name, std::string i_password);
 
 
 login_window::login_window(QWidget *parent)
-    : QDialog(parent), ui(new Ui::login_window) {
+    : QDialog(parent)
+{
 
 
     this->setWindowTitle("Campus Access");
@@ -97,9 +103,7 @@ void login_window::onLoginClicked() {
     }
 }
 
-login_window::~login_window() {
-    delete ui;
-}
+login_window::~login_window() {}
 
 //update key_path to resolve dynamically
 //std::string key_path = R"(W:\Coding\College_Tour\data\key.dat)";
@@ -107,8 +111,8 @@ login_window::~login_window() {
 //password:abc
 //------------------------------------------ID_verify----------------------------------------------
 
-static constexpr std::uint32_t magic = 0x44533143u; // 'C''S''1''D' little-endian display
-static constexpr std::uint8_t version = 1;
+static constexpr std::int32_t magic = 0x44533143u; // 'C''S''1''D' little-endian display
+static constexpr std::int8_t version = 1;
 static constexpr std::uint8_t key_mask = 0x5Au;
 
 static std::uint8_t obf_key(std::uint8_t k)

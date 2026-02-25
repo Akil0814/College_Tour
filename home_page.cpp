@@ -1,6 +1,13 @@
 #include "home_page.h"
+#include "data_manager.h"
+#include "cart.h"
 #include "./ui_homepage.h"
 #include "planatrip.h"
+
+#include "login_window.h"
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QDebug>
 
 HomePage::HomePage(QWidget *parent)
     : QWidget(parent), ui(new Ui::HomePage) {
@@ -40,6 +47,11 @@ HomePage::HomePage(QWidget *parent)
     studentButton = new QPushButton("STUDENT PORTAL");
     adminButton = new QPushButton("ADMIN LOGIN");
 
+    addItemButton = new QPushButton("ADD SOUVENIR TEST"); //added
+    grandTotalButton = new QPushButton("TOTAL SPENT"); //added
+
+
+
     // Add elements with spacing
     sidebarLayout->addWidget(logo);
     sidebarLayout->addSpacing(40);
@@ -48,6 +60,9 @@ HomePage::HomePage(QWidget *parent)
     sidebarLayout->addStretch(1);
     sidebarLayout->addWidget(studentButton);
     sidebarLayout->addWidget(adminButton);
+
+    sidebarLayout->addWidget(addItemButton);
+    sidebarLayout->addWidget(grandTotalButton);
 
     mainLayout->addWidget(sidebarFrame);
     mainLayout->addStretch(1);
@@ -65,8 +80,17 @@ HomePage::HomePage(QWidget *parent)
 
     connect(studentButton, &QPushButton::clicked, this, &HomePage::on_student_button_clicked);
     connect(adminButton, &QPushButton::clicked, this, &HomePage::on_admin_button_clicked);
-}
 
+    // m_cartTester = new CartTester(m_cart, DataManager::instance(), this);
+
+
+    // connect(grandTotalButton, &QPushButton::clicked, m_cartTester, &CartTester::show_grand_total); //added
+    // connect(addItemButton, &QPushButton::clicked,
+    //      this, &HomePage::on_add_item_button_clicked);//added
+
+    //added
+
+}
 HomePage::~HomePage() { delete ui; }
 
 // Keeps the background image stretched to the window size
@@ -92,3 +116,29 @@ void HomePage::on_admin_button_clicked() {
     login->setWindowModality(Qt::ApplicationModal);
     login->show();
 }
+
+
+//added
+void HomePage::on_add_item_button_clicked()
+{
+    auto colleges = DataManager::instance()->get_all_colleges();
+
+    for (const auto& c : colleges)
+    {
+        qInfo() << "College:"
+                << c.name
+                << "(ID:" << c.college_id << ")";
+
+        auto souvenirs =
+            DataManager::instance()->get_all_souvenirs_from_college(c.college_id);
+
+        for (const auto& s : souvenirs)
+        {
+            qInfo() << "   -" << s.name
+                    << "(Souvenir ID:" << s.souvenir_id
+                    << ", $" << s.price << ")";
+        }
+    }
+    // m_cartTester->add_item_prompt();
+}
+
