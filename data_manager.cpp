@@ -746,20 +746,79 @@ bool DataManager::delete_souvenir(int souvenir_id)
 
 bool DataManager::adjust_souvenir_price(int souvenir_id, double price)
 {
+    m_last_error.clear();
 
-    return false;
+    if (!QSqlDatabase::contains(m_conn_name))
+    {
+        m_last_error = "database connection not found";
+        return false;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
+    if (!db.transaction())
+    {
+        m_last_error = db.lastError().text();
+        return false;
+    }
+
+    QSqlQuery q(db);
+    q.prepare("UPDATE souvenir SET price = :price WHERE souvenir_id = :id;");
+    q.bindValue(":price", price);
+    q.bindValue(":id", souvenir_id);
+
+    if (!q.exec())
+    {
+        m_last_error = q.lastError().text();
+        db.rollback();
+        return false;
+    }
+
+    if (q.numRowsAffected() != 1)
+    {
+        m_last_error = "souvenir_id not found";
+        db.rollback();
+        return false;
+    }
+
+    if (!db.commit())
+    {
+        m_last_error = db.lastError().text();
+        db.rollback();
+        return false;
+    }
+
+    return true;
 }
 
 bool DataManager::adjust_souvenir_price(int college_id, const QString& souvenir_name, double price)
 {
-    auto _id = get_souvenir_id(college_id, souvenir_name);
-    if (_id.has_value())
-        return adjust_souvenir_price(_id.value(), price);
-    else
+    m_last_error.clear();
+
+    auto id = get_souvenir_id(college_id, souvenir_name);
+    if (!id.has_value())
+    {
+        m_last_error = "souvenir not found";
         return false;
+    }
+
+    return adjust_souvenir_price(id.value(), price);
 }
 
+bool DataManager::add_campus_from_file(const QString& path)
+{
+    if (!is_open())
+        return false;
 
+    m_last_error.clear();
+
+    return true;
+}
 
 
 

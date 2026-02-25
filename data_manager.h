@@ -27,6 +27,11 @@
 #include "manager.h"
 #include "data_types.h"
 
+
+//Update requirements:
+//Distance: Change to one-way query
+//Table: Update shopping and travel history tables
+
 class DataManager :public Manager<DataManager>
 {
     friend class Manager<DataManager>;
@@ -68,10 +73,10 @@ public:
     QVector<distance_to> get_distances_from_college(int college_id) const;
 
     //returns the direct distance between two colleges, returns nullopt if no edge exists
-    std::optional<double> get_distance_between_college(int college_id_1, int college_id_2) const;
+    std::optional<double> get_distance_between_college(int from_college_id, int to_college_id) const;
 
     //returns the direct distance between two colleges, returns nullopt if no edge exists
-    std::optional<double> get_distance_between_college(const QString& college_name_1, const QString& college_name_2) const;
+    std::optional<double> get_distance_between_college(const QString& from_college_name, const QString& to_college_name) const;
 
 
 
@@ -103,7 +108,7 @@ public:
     std::optional<int> add_college(const QString& new_college_name);
 
     //set the direct distance between two colleges; returns true on success
-    bool set_distance_between_college(int college_id_1, int college_id_2, double miles);
+    bool set_distance_between_college(int from_college_id, int to_college_id, double miles);
 
 
 
@@ -128,7 +133,7 @@ public:
 
     //-------------------------------read file-------------------------------------//
 
-    bool read_schoole_flie();
+    bool add_campus_from_file(const QString& path);
 
 
 
