@@ -1,5 +1,6 @@
 #include "home_page.h"
 #include "./ui_homepage.h"
+#include "planatrip.h"
 
 HomePage::HomePage(QWidget *parent)
     : QWidget(parent), ui(new Ui::HomePage) {
@@ -77,12 +78,17 @@ void HomePage::resizeEvent(QResizeEvent *event) {
 }
 
 void HomePage::on_student_button_clicked() {
+    // Direct routing for students to the trip planner
+    PlanATrip *tripWindow = new PlanATrip(this);
+    tripWindow->setAttribute(Qt::WA_DeleteOnClose);
+    tripWindow->setWindowModality(Qt::ApplicationModal);
+    tripWindow->show();
+}
+
+void HomePage::on_admin_button_clicked() {
+    // Reserve the login window for Admins only
     login_window *login = new login_window(this);
     login->setAttribute(Qt::WA_DeleteOnClose);
     login->setWindowModality(Qt::ApplicationModal);
     login->show();
-}
-
-void HomePage::on_admin_button_clicked() {
-    on_student_button_clicked();
 }

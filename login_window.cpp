@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
+#include <QMessageBox>
 
 //For ID_verify
 #include <string>
@@ -14,6 +15,7 @@
 #include <vector>
 #include <optional>
 //For ID_verify
+bool id_verify(std::string i_user_name, std::string i_password);
 
 
 login_window::login_window(QWidget *parent)
@@ -33,23 +35,23 @@ login_window::login_window(QWidget *parent)
     header->setStyleSheet("font-size: 22px; font-weight: bold; color: #B41E28;");
     header->setAlignment(Qt::AlignCenter);
 
-    QLineEdit *username = new QLineEdit();
-    username->setPlaceholderText("Username");
+    usernameField = new QLineEdit();
+    usernameField->setPlaceholderText("Username");
 
-    QLineEdit *password = new QLineEdit();
-    password->setPlaceholderText("Password");
-    password->setEchoMode(QLineEdit::Password);
+    passwordField = new QLineEdit();
+    passwordField->setPlaceholderText("Password");
+    passwordField->setEchoMode(QLineEdit::Password);
 
     // 3. The Themed Login Button
-    QPushButton *loginBtn = new QPushButton("LOGIN");
+    loginBtn = new QPushButton("LOGIN");
     loginBtn->setObjectName("loginBtn");
     loginBtn->setCursor(Qt::PointingHandCursor);
 
     // Assemble
     layout->addWidget(header);
     layout->addSpacing(10);
-    layout->addWidget(username);
-    layout->addWidget(password);
+    layout->addWidget(usernameField);
+    layout->addWidget(passwordField);
     layout->addStretch(1);
     layout->addWidget(loginBtn);
 
@@ -76,15 +78,29 @@ login_window::login_window(QWidget *parent)
         "QPushButton#loginBtn:hover { background-color: #961921; }"
         );
 
-    connect(loginBtn, &QPushButton::clicked, this, &QDialog::accept);
+    connect(loginBtn, &QPushButton::clicked, this, &login_window::onLoginClicked);
+}
+
+// Logic to check verification
+void login_window::onLoginClicked() {
+    QString user = usernameField->text();
+    QString pass = passwordField->text();
+
+    // Call your existing id_verify function
+    if (id_verify(user.toStdString(), pass.toStdString())) {
+        QMessageBox::information(this, "Success", "Welcome back, Admin!");
+        this->accept(); // Close the login window and return success
+    } else {
+        QMessageBox::warning(this, "Login Failed", "Invalid username or password.");
+        passwordField->clear(); // Clear password for security
+    }
 }
 
 login_window::~login_window() {
     delete ui;
 }
 
-
-std::string key_path = R"(C:\CS1D_P1\College_Tour\data\key.dat)";//change this path to local
+std::string key_path = R"(C:\College_Tour\data\key.dat)";//change this path to local
 //user name: cs1d
 //password:abc
 //------------------------------------------ID_verify----------------------------------------------

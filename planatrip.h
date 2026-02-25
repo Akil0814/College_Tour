@@ -1,5 +1,6 @@
 #ifndef PLANATRIP_H
 #define PLANATRIP_H
+#include "data_manager.h" // Add this include
 
 #include <QMainWindow>
 
@@ -16,6 +17,9 @@ public:
     ~PlanATrip();
 
 private:
+    // Helper function to load data from database
+    void populateColleges();
+
     Ui::PlanATrip *ui;
 };
 
