@@ -747,7 +747,7 @@ bool DataManager::delete_souvenir(int souvenir_id)
 bool DataManager::adjust_souvenir_price(int souvenir_id, double price)
 {
 
-
+    return false;
 }
 
 bool DataManager::adjust_souvenir_price(int college_id, const QString& souvenir_name, double price)
@@ -757,8 +757,6 @@ bool DataManager::adjust_souvenir_price(int college_id, const QString& souvenir_
         return adjust_souvenir_price(_id.value(), price);
     else
         return false;
-
-
 }
 
 
