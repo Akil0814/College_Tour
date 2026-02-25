@@ -109,41 +109,6 @@
      <string>Trip Stops</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="premadeTripsDropDown">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>410</y>
-      <width>201</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(255, 0, 0);</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="premadeTrips">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>360</y>
-      <width>291</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>30</pointsize>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(255, 0, 0);</string>
-    </property>
-    <property name="text">
-     <string>Premade Trips</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="goButton">
     <property name="geometry">
      <rect>
@@ -164,6 +129,16 @@
     </property>
     <property name="text">
      <string>Go!</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="listWidget">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>330</y>
+      <width>256</width>
+      <height>192</height>
+     </rect>
     </property>
    </widget>
   </widget>

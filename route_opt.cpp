@@ -62,3 +62,16 @@ void visit_next(
 
     visit_next(nearest_campus_id, remaining_colleges, visit_order, total_distance, data_manager);
 }
+
+QVector<int> route_optimize(int start_id, QVector<int> destinations) {
+    QVector<int> visit_order;
+    QVector<int> leg_distances;
+
+    // The algorithm starts at the fixed starting college
+    visit_order.push_back(start_id);
+
+    // Logic from  helper function
+    visit_next(start_id, destinations, visit_order, leg_distances, *DataManager::instance());
+
+    return visit_order;
+}

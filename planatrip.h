@@ -16,11 +16,18 @@ public:
     explicit PlanATrip(QWidget *parent = nullptr);
     ~PlanATrip();
 
+private slots:
+    void on_addStopButton_clicked(); // Slot for the "+" button
+    void on_goButton_clicked();      // Slot to start optimization
+    // This function triggers whenever the user selects a school from the list
+    void on_tripStopsDropDown_activated(int index);
+
 private:
-    // Helper function to load data from database
     void populateColleges();
 
     Ui::PlanATrip *ui;
+    int startingCollegeId;
+    QVector<int> tripStops;          // The list of stops to optimize
 };
 
 #endif // PLANATRIP_H
