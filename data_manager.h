@@ -117,8 +117,19 @@ public:
     //price check fail//wrong error message when college_id does not exist
     std::optional<int> add_souvenir(int college_id, const QString& name, double price);
 
+
+    bool adjust_souvenir_price(int college_id, const QString& souvenir_name,double price);
+
+    bool adjust_souvenir_price(int souvenir_id, double price);
+
+
     //return true if successfully deleted
     bool delete_souvenir(int souvenir_id);
+
+    //-------------------------------read file-------------------------------------//
+
+    bool read_schoole_flie();
+
 
 
 private:

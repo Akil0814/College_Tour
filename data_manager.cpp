@@ -744,6 +744,27 @@ bool DataManager::delete_souvenir(int souvenir_id)
     return true;
 }
 
+bool DataManager::adjust_souvenir_price(int souvenir_id, double price)
+{
+
+
+}
+
+bool DataManager::adjust_souvenir_price(int college_id, const QString& souvenir_name, double price)
+{
+    auto _id = get_souvenir_id(college_id, souvenir_name);
+    if (_id.has_value())
+        return adjust_souvenir_price(_id.value(), price);
+    else
+        return false;
+
+
+}
+
+
+
+
+
 //-----------------private-----------------//
 
 static QStringList parse_csv_line(const QString& line)
