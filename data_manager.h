@@ -135,6 +135,9 @@ public:
 
     bool add_campus_from_file(const QString& path);
 
+    //
+    QVector<QString> get_initials(const QVector<int>& college_id) const;
+
 
 
 private:

@@ -100,7 +100,7 @@ login_window::~login_window() {
     delete ui;
 }
 
-std::string key_path = R"(C:\College_Tour\data\key.dat)";//change this path to local
+std::string key_path = R"(W:\Coding\College_Tour\data\key.dat)";//change this path to local
 //user name: cs1d
 //password:abc
 //------------------------------------------ID_verify----------------------------------------------

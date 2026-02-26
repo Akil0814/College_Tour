@@ -822,6 +822,56 @@ bool DataManager::add_campus_from_file(const QString& path)
 
 
 
+/*
+This function returns a list of school initials from a list of college names.
+This is done by taking the first letter of each word and checking if its uppcase
+(to avoid "of")
+*/
+QVector<QString> DataManager::get_initials(const QVector<int>& college_id) const
+{
+    if (college_id.empty())
+        return {};
+
+    QVector<QString> college_name;
+    QVector<QString> initials;
+
+    for (auto& iter : college_id)
+    {
+        auto name=get_college_name(iter);
+        if (name.has_value())
+            college_name.push_back(name.value());
+    }
+
+
+    for (QString college : college_name)
+    {
+        QString i = "";
+
+        // Always true on first iteration for a new school name, otherwise true if space encountered
+        bool validInitial = true;
+
+        // For each letter in college name
+        for (QChar letter : college)
+        {
+            // Check if letter is valid initial (first letter or after space and capital)
+            if (validInitial && letter.isUpper())
+            {
+                i += letter;
+                validInitial = false;
+            }
+            if (letter == ' ')
+            {
+                validInitial = true;
+            }
+        }
+
+        // Add school's completed initials to return vector
+        initials.push_back(i);
+    }
+    return initials;
+}
+
+
 //-----------------private-----------------//
 
 static QStringList parse_csv_line(const QString& line)
