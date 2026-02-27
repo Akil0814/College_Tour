@@ -3,6 +3,7 @@
 #include "data_manager.h"
 #include <QMessageBox>
 #include <QVector>
+#include <QGraphicsOpacityEffect>
 
 QVector<int> route_optimize(int start_id, QVector<int> destinations);
 
@@ -10,6 +11,15 @@ PlanATrip::PlanATrip(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::PlanATrip)
 {
+    bg = new QLabel(this);
+    bg->setPixmap(QPixmap(":/res/res/saddleback-college-gateway-building-1050x750-compact.png"));
+    bg->setScaledContents(true);
+    bg->resize(size());
+    bg->setStyleSheet("background: transparent;");
+    bg->setGraphicsEffect(new QGraphicsOpacityEffect(bg));
+    auto *effect = new QGraphicsOpacityEffect(bg);
+    effect->setOpacity(0.4);
+    bg->setGraphicsEffect(effect);
     ui->setupUi(this);
 
     // Fill the dropdowns as soon as the window is created
@@ -19,6 +29,12 @@ PlanATrip::PlanATrip(QWidget *parent)
 PlanATrip::~PlanATrip()
 {
     delete ui;
+}
+
+void PlanATrip::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    bg->resize(size());
 }
 
 void PlanATrip::populateColleges()
@@ -53,7 +69,7 @@ void PlanATrip::on_addStopButton_clicked() {
         // 3. Prevent duplicates in the trip
         if (!tripStops.contains(id)) {
             tripStops.append(id);
-            ui->listWidget->addItem(selectedName); // Show it to the user
+            //ui->listWidget->addItem(selectedName); // Show it to the user
         }
     }
 }
@@ -87,7 +103,7 @@ void PlanATrip::on_tripStopsDropDown_activated(int index) {
 
         if (!tripStops.contains(id)) {
             tripStops.append(id);
-            ui->listWidget->addItem(selectedName);
+            //ui->listWidget->addItem(selectedName);
         } else {
             QMessageBox::information(this, "Already Added", selectedName + " is already in your trip.");
         }
