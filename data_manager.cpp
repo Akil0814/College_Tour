@@ -32,6 +32,64 @@ bool DataManager::is_open() const
     return db.isValid() && db.isOpen();
 }
 
+bool DataManager::reset_database(bool remove_backup)
+{
+    m_last_error.clear();
+    
+    m_init_ed = false;
+
+    if (QSqlDatabase::contains(m_conn_name))
+    {
+        {
+            QSqlDatabase db = QSqlDatabase::database(m_conn_name, false);
+            if (db.isValid() && db.isOpen())
+                db.close();
+        }
+        QSqlDatabase::removeDatabase(m_conn_name);
+        
+    }
+
+    QString time=QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss_zzz");
+    
+    if (QFile::exists(m_db_path))
+    {
+        QString backup = m_db_path + time +".bak";
+        if (!QFile::rename(m_db_path, backup))
+        {
+            m_last_error = "failed to backup db file";
+            m_init_ed = false;
+            if(init())
+                m_last_error += ", but database is still usable";
+            else
+                m_last_error += ", and database is not usable";
+            
+            return false;
+        }
+    }
+
+
+    if (!init())
+    {
+        QFile::remove(m_db_path);
+        QFile::rename(m_db_path + time + ".bak", m_db_path);
+
+        m_init_ed=false;
+        m_last_error = "failed to initialize new database";
+        if(init())
+            m_last_error += ", but restored backup successfully";
+        else
+            m_last_error += ", and failed to restore backup";
+
+        return false;
+    }
+
+    if(remove_backup)
+        QFile::remove(m_db_path + time + ".bak");
+
+    return true;
+}
+
+
 QString DataManager::last_error() const 
 {
     return m_last_error;
@@ -202,12 +260,13 @@ std::optional<double> DataManager::get_distance_between_college(int college_id_1
         return std::nullopt;
 
     QSqlQuery q(db);
+    const int a = std::min(college_id_1, college_id_2);
+    const int b = std::max(college_id_1, college_id_2);
 
     const QString sql =
         "select miles "
         "from distance "
-        "where (a_college_id = :a and b_college_id = :b) "
-        "   or (a_college_id = :b and b_college_id = :a) "
+        "where a_college_id = :a and b_college_id = :b "
         "limit 1;";
 
     if (!prepare_or_set_error(q, sql))
@@ -810,23 +869,79 @@ bool DataManager::adjust_souvenir_price(int college_id, const QString& souvenir_
     return adjust_souvenir_price(id.value(), price);
 }
 
-bool DataManager::add_campus_from_file(const QString& path)
+bool DataManager::add_campus_from_file(const QString& path, const QString& name)
 {
     if (!is_open())
+    {
+        m_last_error = "database is not open";
         return false;
+    }
 
     m_last_error.clear();
 
-    return true;
+    const QString file_name = name.trimmed();
+    if (file_name.isEmpty())
+    {
+        m_last_error = "import file name is empty";
+        return false;
+    }
+
+    QString distances_csv;
+    QString path_err;
+
+    auto resolve_distance_path = [](const QString& input_path, const QString& input_name ,QString& out_distances_csv, QString& err) -> bool
+        {
+            const QString clean_path = input_path.trimmed();
+            if (clean_path.isEmpty())
+            {
+                err = "import path is empty";
+                return false;
+            }
+
+            const QFileInfo input_info(clean_path);
+            if (!input_info.exists())
+            {
+                err = "path does not exist: " + clean_path;
+                return false;
+            }
+
+            if (input_info.isDir())
+            {
+                const QDir dir(input_info.absoluteFilePath());
+                out_distances_csv = dir.filePath(input_name);
+            }
+            else
+            {
+                const QString file_name = input_info.fileName();
+                if (file_name.compare(input_name, Qt::CaseInsensitive) == 0)
+                {
+                    out_distances_csv = input_info.absoluteFilePath();
+                }
+                else
+                {
+                    err = "path must be a folder or " + input_name;
+                    return false;
+                }
+            }
+
+            if (!QFileInfo::exists(out_distances_csv))
+            {
+                err = "Cannot open CSV: " + out_distances_csv;
+                return false;
+            }
+
+            return true;
+        };
+
+    if (!resolve_distance_path(path, file_name, distances_csv, path_err))
+    {
+        m_last_error = path_err;
+        return false;
+    }
+
+    return import_distances_csv_file(distances_csv);
 }
 
-
-
-/*
-This function returns a list of school initials from a list of college names.
-This is done by taking the first letter of each word and checking if its uppcase
-(to avoid "of")
-*/
 QVector<QString> DataManager::get_initials(const QVector<int>& college_id) const
 {
     if (college_id.empty())
@@ -965,395 +1080,11 @@ static bool parse_money_to_double(QString s, double& out_price)
     return true;
 }
 
-bool DataManager::open_db()
+bool DataManager::import_from_csv_files(const QString& souvenirs_csv, const QString& distances_csv)
 {
-    std::cout << "1-1.Opening the database" << std::endl;
-    m_last_error.clear();
-
-    QDir dir(QDir::current());
-
-    QString data_dir_path;
-    for (int i = 0; i < 8; ++i)
-    {
-        const QString candidate = dir.filePath("data");
-        if (QDir(candidate).exists())
-        {
-            data_dir_path = QDir(candidate).absolutePath();
-            break;
-        }
-
-        const QString candidate2 = dir.filePath("College_Tour/data");
-        if (QDir(candidate2).exists())
-        {
-            data_dir_path = QDir(candidate2).absolutePath();
-            break;
-        }
-
-        if (!dir.cdUp())
-            break;
-    }
-
-    if (data_dir_path.isEmpty())
-    {
-        const QString fallback = QDir::current().filePath("data");
-        QDir().mkpath(fallback);
-        data_dir_path = QDir(fallback).absolutePath();
-    }
-
-    m_db_path = QDir(data_dir_path).filePath("college_tour.db");
-
-    QSqlDatabase db = QSqlDatabase::contains(m_conn_name)
-        ? QSqlDatabase::database(m_conn_name)
-        : QSqlDatabase::addDatabase("QSQLITE", m_conn_name);
-
-    db.setDatabaseName(m_db_path);
-
-    if (!db.open())
-    {
-        m_last_error = db.lastError().text();
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
         return false;
-    }
-
-    std::cout << "1-2.Opening the database" << std::endl;
-
-    return true;
-}
-
-bool DataManager::init_pragmas()
-{
-    std::cout <<"2-1 Configuring runtime parameters" << std::endl;
-
-    m_last_error.clear();
-
-    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
-    if (!db.isValid() || !db.isOpen())
-    {
-        m_last_error = "Database is not open.";
-        return false;
-    }
-
-    QSqlQuery q(db);
-
-    auto exec_sql = [&](const QString& sql) -> bool
-        {
-            if (!q.exec(sql))
-            {
-                m_last_error = q.lastError().text() + " | SQL: " + sql;
-                return false;
-            }
-            return true;
-        };
-
-    if (!exec_sql("PRAGMA foreign_keys = ON;"))
-        return false;
-
-    if (!q.exec("PRAGMA journal_mode = WAL;"))
-    {
-        if (!q.exec("PRAGMA journal_mode = DELETE;"))
-        {
-            m_last_error = q.lastError().text() + " | SQL: PRAGMA journal_mode";
-            return false;
-        }
-    }
-
-    if (!exec_sql("PRAGMA synchronous = NORMAL;"))
-        return false;
-
-    if (!exec_sql("PRAGMA temp_store = MEMORY;"))
-        return false;
-
-    db.setConnectOptions("QSQLITE_BUSY_TIMEOUT=5000");
-
-    std::cout << "2-2 Configuring runtime parameters" << std::endl;
-
-    return true;
-}
-
-bool DataManager::init_schema()
-{
-    std::cout <<"3-1 Building the table structure"<< std::endl;
-    m_last_error.clear();
-
-
-    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
-    if (!db.isValid() || !db.isOpen())
-    {
-        m_last_error = "Database is not open.";
-        return false;
-    }
-
-    QSqlQuery q(db);
-
-
-    //std::cout << "out put 1:" << std::endl;
-    //q.exec("PRAGMA table_info(souvenir);");
-    //while (q.next())
-    //{
-    //    qDebug() << q.value(1).toString();
-    //}
-
-
-    auto exec_sql = [&](const QString& sql) -> bool
-        {
-            if (!q.exec(sql))
-            {
-                m_last_error = q.lastError().text() + " | SQL: " + sql;
-                return false;
-            }
-            return true;
-        };
-
-    // college
-    //std::cout << "out put 2:" << std::endl;
-    //q.exec("PRAGMA table_info(souvenir);");
-    //while (q.next())
-    //{
-    //    qDebug() << q.value(1).toString();
-    //}
-
-    std::cout << "3-college Building the table structure" << std::endl;
-    if (!exec_sql(
-        "create table if not exists college ("
-        "    college_id integer primary key autoincrement,"
-        "    name text not null unique"
-        ");"))
-        return false;
-
-    // souvenir
-    //std::cout << "out put 3:" << std::endl;
-    //q.exec("PRAGMA table_info(souvenir);");
-    //while (q.next())
-    //{
-    //    qDebug() << q.value(1).toString();
-    //}
-
-    std::cout << "3-souvir Building the table structure" << std::endl;
-    if (!exec_sql(
-        "create table if not exists souvenir ("
-        "    souvenir_id integer primary key autoincrement,"
-        "    college_id integer not null,"
-        "    name text not null,"
-        "    price real not null check(price >= 0),"
-        "    foreign key(college_id) references college(college_id)"
-        "        on delete cascade"
-        "        on update cascade,"
-        "    unique(college_id, name)"
-        ");"))
-        return false;
-
-    if (!exec_sql("create index if not exists idx_souvenir_college_id on souvenir(college_id);"))
-        return false;
-
-    // distance (directed edge: keep A->B and B->A separately when both exist)
-    //std::cout << "out put 4:" << std::endl;
-    //q.exec("PRAGMA table_info(souvenir);");
-    //while (q.next())
-    //{
-    //    qDebug() << q.value(1).toString();
-    //}
-
-    std::cout << "3-dis Building the table structure" << std::endl;
-    const QString create_distance_sql =
-        "create table if not exists distance ("
-        "    a_college_id integer not null,"
-        "    b_college_id integer not null,"
-        "    miles real not null check(miles >= 0),"
-        "    primary key(a_college_id, b_college_id),"
-        "    foreign key(a_college_id) references college(college_id)"
-        "        on delete cascade"
-        "        on update cascade,"
-        "    foreign key(b_college_id) references college(college_id)"
-        "        on delete cascade"
-        "        on update cascade,"
-        "    check(a_college_id <> b_college_id)"
-        ");";
-
-    bool has_distance_table = false;
-    QSet<QString> distance_cols;
-    if (!q.exec("PRAGMA table_info(distance);"))
-    {
-        m_last_error = q.lastError().text() + " | SQL: PRAGMA table_info(distance);";
-        return false;
-    }
-    while (q.next())
-    {
-        has_distance_table = true;
-        distance_cols.insert(q.value(1).toString());
-    }
-
-    const bool has_ab_schema =
-        distance_cols.contains("a_college_id") &&
-        distance_cols.contains("b_college_id");
-    const bool has_from_to_schema =
-        distance_cols.contains("from_college_id") &&
-        distance_cols.contains("to_college_id");
-
-    if (!has_distance_table)
-    {
-        if (!exec_sql(create_distance_sql))
-            return false;
-    }
-    else if (has_from_to_schema)
-    {
-        if (!db.transaction())
-        {
-            m_last_error = db.lastError().text();
-            return false;
-        }
-
-        auto rollback_schema = [&]() -> bool
-            {
-                m_last_error = q.lastError().text();
-                db.rollback();
-                return false;
-            };
-
-        if (!q.exec("alter table distance rename to distance_old;"))
-            return rollback_schema();
-
-        if (!q.exec(create_distance_sql))
-            return rollback_schema();
-
-        if (!q.exec(
-            "insert into distance(a_college_id, b_college_id, miles) "
-            "select from_college_id, to_college_id, miles "
-            "from distance_old;"))
-            return rollback_schema();
-
-        if (!q.exec("drop table distance_old;"))
-            return rollback_schema();
-
-        if (!db.commit())
-        {
-            m_last_error = db.lastError().text();
-            db.rollback();
-            return false;
-        }
-    }
-    else if (!has_ab_schema)
-    {
-        m_last_error = "Unsupported distance table schema.";
-        return false;
-    }
-
-    if (!exec_sql("create index if not exists idx_distance_a on distance(a_college_id);"))
-        return false;
-
-    if (!exec_sql("create index if not exists idx_distance_b on distance(b_college_id);"))
-        return false;
-
-    // trip
-    //std::cout << "out put 5:" << std::endl;
-    //q.exec("PRAGMA table_info(souvenir);");
-    //while (q.next())
-    //{
-    //    qDebug() << q.value(1).toString();
-    //}
-
-    if (!exec_sql(
-        "create table if not exists trip ("
-        "    trip_id integer primary key autoincrement,"
-        "    start_college_id integer not null,"
-        "    created_at text not null default (datetime('now')),"
-        "    total_miles real not null default 0 check(total_miles >= 0),"
-        "    foreign key(start_college_id) references college(college_id)"
-        "        on delete restrict"
-        "        on update cascade"
-        ");"))
-        return false;
-
-    // purchase
-    if (!exec_sql(
-        "create table if not exists purchase ("
-        "    trip_id integer not null,"
-        "    college_id integer not null,"
-        "    souvenir_id integer not null,"
-        "    quantity integer not null check(quantity > 0),"
-        "    unit_price real not null check(unit_price >= 0),"
-        "    primary key(trip_id, souvenir_id),"
-        "    foreign key(trip_id) references trip(trip_id)"
-        "        on delete cascade"
-        "        on update cascade,"
-        "    foreign key(college_id) references college(college_id)"
-        "        on delete cascade"
-        "        on update cascade,"
-        "    foreign key(souvenir_id) references souvenir(souvenir_id)"
-        "        on delete cascade"
-        "        on update cascade"
-        ");"))
-        return false;
-
-    if (!exec_sql("create index if not exists idx_purchase_trip_id on purchase(trip_id);"))
-        return false;
-
-    if (!exec_sql("create index if not exists idx_purchase_college_id on purchase(college_id);"))
-        return false;
-
-
-
-    q.exec("PRAGMA table_info(souvenir);");
-
-    //std::cout << "out put end:" << std::endl;
-    //while (q.next())
-    //{
-    //    qDebug() << q.value(1).toString();
-    //}
-
-    std::cout << "3-2 Building the table structure" << std::endl;
-
-    return true;
-}
-
-bool DataManager::seed_if_empty()
-{
-    std::cout << "4-1 Loading data" << std::endl;
-    m_last_error.clear();
-
-    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
-    if (!db.isValid() || !db.isOpen())
-    {
-        m_last_error = "Database is not open.";
-        return false;
-    }
-
-    // already seeded? all three core tables must have data.
-    auto table_has_rows = [&](const char* table_name, bool& has_rows) -> bool
-        {
-            QSqlQuery q(db);
-            if (!q.exec(QString("select count(*) from %1;").arg(table_name)))
-            {
-                m_last_error = q.lastError().text();
-                return false;
-            }
-            if (!q.next())
-            {
-                m_last_error = "count query returned no row";
-                return false;
-            }
-            has_rows = q.value(0).toInt() > 0;
-            return true;
-        };
-
-    bool has_college_rows = false;
-    bool has_souvenir_rows = false;
-    bool has_distance_rows = false;
-    if (!table_has_rows("college", has_college_rows))
-        return false;
-    if (!table_has_rows("souvenir", has_souvenir_rows))
-        return false;
-    if (!table_has_rows("distance", has_distance_rows))
-        return false;
-
-    if (has_college_rows && has_souvenir_rows && has_distance_rows)
-    {
-        std::cout << "4-2 Loading data" << std::endl;
-        return true;
-    }
-
-    // data dir comes from db path: .../data/college_tour.db
-    const QString data_dir = QFileInfo(m_db_path).dir().absolutePath();
-    const QString souvenirs_csv = QDir(data_dir).filePath("college_souvenirs.csv");
-    const QString distances_csv = QDir(data_dir).filePath("college_campus_distances.csv");
 
     QStringList souvenir_lines;
     QStringList distance_lines;
@@ -1497,7 +1228,7 @@ bool DataManager::seed_if_empty()
         }
     }
 
-    // 6) insert distances (dedupe exact same a->b pair)
+    // 6) insert distances as undirected edges (A->B == B->A), then dedupe by canonical key
     {
         QSqlQuery up(db);
         const QString sql =
@@ -1530,11 +1261,14 @@ bool DataManager::seed_if_empty()
             if (!ok)
                 continue;
 
-            int a_id = college_id_by_name.value(a_name);
-            int b_id = college_id_by_name.value(b_name);
+            const int raw_a_id = college_id_by_name.value(a_name);
+            const int raw_b_id = college_id_by_name.value(b_name);
 
-            if (a_id == b_id)
+            if (raw_a_id == raw_b_id)
                 continue;
+
+            const int a_id = std::min(raw_a_id, raw_b_id);
+            const int b_id = std::max(raw_a_id, raw_b_id);
 
             up.bindValue(0, a_id);
             up.bindValue(1, b_id);
@@ -1548,7 +1282,506 @@ bool DataManager::seed_if_empty()
     if (!db.commit())
         return rollback_with(db.lastError().text());
 
-    std::cout << "4-x Loading data" << std::endl;
+    return true;
+}
+
+bool DataManager::import_distances_csv_file(const QString& distances_csv)
+{
+    QSqlDatabase db = get_db_or_set_error();
+    if (!db.isValid())
+        return false;
+
+    QStringList distance_lines;
+    QString file_err;
+
+    if (!read_csv_file_lines(distances_csv, distance_lines, file_err))
+    {
+        m_last_error = file_err;
+        return false;
+    }
+
+    QSet<QString> college_set;
+    for (int i = 1; i < distance_lines.size(); ++i) // skip header
+    {
+        const QStringList cols = parse_csv_line(distance_lines[i]);
+        if (cols.size() < 2)
+            continue;
+
+        const QString a = norm_name(cols[0]);
+        const QString b = norm_name(cols[1]);
+        if (!a.isEmpty()) college_set.insert(a);
+        if (!b.isEmpty()) college_set.insert(b);
+    }
+
+    if (!db.transaction())
+    {
+        m_last_error = db.lastError().text();
+        return false;
+    }
+
+    auto rollback_with = [&](const QString& err) -> bool
+        {
+            m_last_error = err;
+            db.rollback();
+            return false;
+        };
+
+    {
+        QSqlQuery ins(db);
+        if (!ins.prepare("insert or ignore into college(name) values(?);"))
+            return rollback_with(ins.lastError().text());
+
+        for (const QString& name : college_set)
+        {
+            ins.bindValue(0, name);
+            if (!ins.exec())
+                return rollback_with(ins.lastError().text() + " | college: " + name);
+        }
+    }
+
+    QHash<QString, int> college_id_by_name;
+    {
+        QSqlQuery q(db);
+        if (!q.exec("select college_id, name from college;"))
+            return rollback_with(q.lastError().text());
+
+        while (q.next())
+            college_id_by_name.insert(q.value(1).toString(), q.value(0).toInt());
+    }
+
+    {
+        QSqlQuery up(db);
+        const QString sql =
+            "insert into distance(a_college_id, b_college_id, miles) values(?, ?, ?) "
+            "on conflict(a_college_id, b_college_id) do update set miles=excluded.miles;";
+        if (!up.prepare(sql))
+            return rollback_with(up.lastError().text());
+
+        for (int i = 1; i < distance_lines.size(); ++i) // skip header
+        {
+            const QStringList cols = parse_csv_line(distance_lines[i]);
+            if (cols.size() < 3)
+                continue;
+
+            const QString a_name = norm_name(cols[0]);
+            const QString b_name = norm_name(cols[1]);
+            const QString miles_s = cols[2].trimmed();
+
+            if (a_name.isEmpty() || b_name.isEmpty())
+                continue;
+
+            if (!college_id_by_name.contains(a_name))
+                return rollback_with("Unknown college in distances CSV: " + a_name);
+
+            if (!college_id_by_name.contains(b_name))
+                return rollback_with("Unknown college in distances CSV: " + b_name);
+
+            bool ok = false;
+            const double miles = miles_s.toDouble(&ok);
+            if (!ok)
+                continue;
+
+            const int raw_a_id = college_id_by_name.value(a_name);
+            const int raw_b_id = college_id_by_name.value(b_name);
+            if (raw_a_id == raw_b_id)
+                continue;
+
+            const int a_id = std::min(raw_a_id, raw_b_id);
+            const int b_id = std::max(raw_a_id, raw_b_id);
+
+            up.bindValue(0, a_id);
+            up.bindValue(1, b_id);
+            up.bindValue(2, miles);
+
+            if (!up.exec())
+                return rollback_with(up.lastError().text() + " | distance: " + a_name + " - " + b_name);
+        }
+    }
+
+    if (!db.commit())
+        return rollback_with(db.lastError().text());
+
+    return true;
+}
+
+bool DataManager::open_db()
+{
+    std::cout << "1-1.Opening the database" << std::endl;
+    m_last_error.clear();
+
+    QDir dir(QDir::current());
+
+    QString data_dir_path;
+    for (int i = 0; i < 8; ++i)
+    {
+        const QString candidate = dir.filePath("data");
+        if (QDir(candidate).exists())
+        {
+            data_dir_path = QDir(candidate).absolutePath();
+            break;
+        }
+
+        const QString candidate2 = dir.filePath("College_Tour/data");
+        if (QDir(candidate2).exists())
+        {
+            data_dir_path = QDir(candidate2).absolutePath();
+            break;
+        }
+
+        if (!dir.cdUp())
+            break;
+    }
+
+    if (data_dir_path.isEmpty())
+    {
+        const QString fallback = QDir::current().filePath("data");
+        QDir().mkpath(fallback);
+        data_dir_path = QDir(fallback).absolutePath();
+    }
+
+    m_db_path = QDir(data_dir_path).filePath("college_tour.db");
+
+    QSqlDatabase db = QSqlDatabase::contains(m_conn_name)
+        ? QSqlDatabase::database(m_conn_name)
+        : QSqlDatabase::addDatabase("QSQLITE", m_conn_name);
+
+    db.setDatabaseName(m_db_path);
+
+    if (!db.open())
+    {
+        m_last_error = db.lastError().text();
+        return false;
+    }
+
+    std::cout << "1-2.Opening the database" << std::endl;
+
+    return true;
+}
+
+bool DataManager::init_pragmas()
+{
+    std::cout <<"2-1 Configuring runtime parameters" << std::endl;
+
+    m_last_error.clear();
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
+    QSqlQuery q(db);
+
+    auto exec_sql = [&](const QString& sql) -> bool
+        {
+            if (!q.exec(sql))
+            {
+                m_last_error = q.lastError().text() + " | SQL: " + sql;
+                return false;
+            }
+            return true;
+        };
+
+    if (!exec_sql("PRAGMA foreign_keys = ON;"))
+        return false;
+
+    if (!q.exec("PRAGMA journal_mode = WAL;"))
+    {
+        if (!q.exec("PRAGMA journal_mode = DELETE;"))
+        {
+            m_last_error = q.lastError().text() + " | SQL: PRAGMA journal_mode";
+            return false;
+        }
+    }
+
+    if (!exec_sql("PRAGMA synchronous = NORMAL;"))
+        return false;
+
+    if (!exec_sql("PRAGMA temp_store = MEMORY;"))
+        return false;
+
+    db.setConnectOptions("QSQLITE_BUSY_TIMEOUT=5000");
+
+    std::cout << "2-2 Configuring runtime parameters" << std::endl;
+
+    return true;
+}
+
+bool DataManager::init_schema()
+{
+    std::cout <<"3-1 Building the table structure"<< std::endl;
+    m_last_error.clear();
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
+    QSqlQuery q(db);
+
+    auto exec_sql = [&](const QString& sql) -> bool
+        {
+            if (!q.exec(sql))
+            {
+                m_last_error = q.lastError().text() + " | SQL: " + sql;
+                return false;
+            }
+            return true;
+        };
+
+
+    std::cout << "3-college Building the table structure" << std::endl;
+    if (!exec_sql(
+        "create table if not exists college ("
+        "    college_id integer primary key autoincrement,"
+        "    name text not null unique"
+        ");"))
+        return false;
+
+
+    std::cout << "3-souvir Building the table structure" << std::endl;
+    if (!exec_sql(
+        "create table if not exists souvenir ("
+        "    souvenir_id integer primary key autoincrement,"
+        "    college_id integer not null,"
+        "    name text not null,"
+        "    price real not null check(price >= 0),"
+        "    foreign key(college_id) references college(college_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    unique(college_id, name)"
+        ");"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_souvenir_college_id on souvenir(college_id);"))
+        return false;
+
+
+    std::cout << "3-dis Building the table structure" << std::endl;
+    const QString create_distance_sql =
+        "create table if not exists distance ("
+        "    a_college_id integer not null,"
+        "    b_college_id integer not null,"
+        "    miles real not null check(miles >= 0),"
+        "    primary key(a_college_id, b_college_id),"
+        "    foreign key(a_college_id) references college(college_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    foreign key(b_college_id) references college(college_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    check(a_college_id < b_college_id)"
+        ");";
+
+    bool has_distance_table = false;
+    QSet<QString> distance_cols;
+    if (!q.exec("PRAGMA table_info(distance);"))
+    {
+        m_last_error = q.lastError().text() + " | SQL: PRAGMA table_info(distance);";
+        return false;
+    }
+    while (q.next())
+    {
+        has_distance_table = true;
+        distance_cols.insert(q.value(1).toString());
+    }
+
+    const bool has_ab_schema =
+        distance_cols.contains("a_college_id") &&
+        distance_cols.contains("b_college_id");
+    const bool has_from_to_schema =
+        distance_cols.contains("from_college_id") &&
+        distance_cols.contains("to_college_id");
+
+    if (!has_distance_table)
+    {
+        if (!exec_sql(create_distance_sql))
+            return false;
+    }
+    else if (!has_ab_schema && !has_from_to_schema)
+    {
+        m_last_error = "Unsupported distance table schema.";
+        return false;
+    }
+    else
+    {
+        bool need_normalize = has_from_to_schema;
+
+        if (has_ab_schema && !need_normalize)
+        {
+            // Existing table may contain non-canonical rows (a >= b) including reverse duplicates.
+            if (!q.exec("select 1 from distance where a_college_id >= b_college_id limit 1;"))
+            {
+                m_last_error = q.lastError().text();
+                return false;
+            }
+
+            if (q.next())
+                need_normalize = true;
+        }
+
+        if (need_normalize)
+        {
+            if (!db.transaction())
+            {
+                m_last_error = db.lastError().text();
+                return false;
+            }
+
+            auto rollback_schema = [&]() -> bool
+                {
+                    m_last_error = q.lastError().text();
+                    db.rollback();
+                    return false;
+                };
+
+            if (!q.exec("alter table distance rename to distance_old;"))
+                return rollback_schema();
+
+            if (!q.exec(create_distance_sql))
+                return rollback_schema();
+
+            const QString source_a = has_from_to_schema ? "from_college_id" : "a_college_id";
+            const QString source_b = has_from_to_schema ? "to_college_id" : "b_college_id";
+
+            const QString normalize_sql = QString(
+                "insert into distance(a_college_id, b_college_id, miles) "
+                "select canon_a, canon_b, min(miles) "
+                "from ("
+                "    select "
+                "        case when %1 < %2 then %1 else %2 end as canon_a, "
+                "        case when %1 < %2 then %2 else %1 end as canon_b, "
+                "        miles "
+                "    from distance_old"
+                ") "
+                "where canon_a <> canon_b "
+                "group by canon_a, canon_b;").arg(source_a, source_b);
+
+            if (!q.exec(normalize_sql))
+                return rollback_schema();
+
+            if (!q.exec("drop table distance_old;"))
+                return rollback_schema();
+
+            if (!db.commit())
+            {
+                m_last_error = db.lastError().text();
+                db.rollback();
+                return false;
+            }
+        }
+    }
+
+    if (!exec_sql("create index if not exists idx_distance_a on distance(a_college_id);"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_distance_b on distance(b_college_id);"))
+        return false;
+
+
+    if (!exec_sql(
+        "create table if not exists trip ("
+        "    trip_id integer primary key autoincrement,"
+        "    start_college_id integer not null,"
+        "    created_at text not null default (datetime('now')),"
+        "    total_miles real not null default 0 check(total_miles >= 0),"
+        "    foreign key(start_college_id) references college(college_id)"
+        "        on delete restrict"
+        "        on update cascade"
+        ");"))
+        return false;
+
+    // purchase
+    if (!exec_sql(
+        "create table if not exists purchase ("
+        "    trip_id integer not null,"
+        "    college_id integer not null,"
+        "    souvenir_id integer not null,"
+        "    quantity integer not null check(quantity > 0),"
+        "    unit_price real not null check(unit_price >= 0),"
+        "    primary key(trip_id, souvenir_id),"
+        "    foreign key(trip_id) references trip(trip_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    foreign key(college_id) references college(college_id)"
+        "        on delete cascade"
+        "        on update cascade,"
+        "    foreign key(souvenir_id) references souvenir(souvenir_id)"
+        "        on delete cascade"
+        "        on update cascade"
+        ");"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_purchase_trip_id on purchase(trip_id);"))
+        return false;
+
+    if (!exec_sql("create index if not exists idx_purchase_college_id on purchase(college_id);"))
+        return false;
+
+
+    std::cout << "3-2 Building the table structure" << std::endl;
+
+    return true;
+}
+
+bool DataManager::seed_if_empty()
+{
+    std::cout << "4-1 Loading data" << std::endl;
+    m_last_error.clear();
+
+    QSqlDatabase db = QSqlDatabase::database(m_conn_name);
+    if (!db.isValid() || !db.isOpen())
+    {
+        m_last_error = "Database is not open.";
+        return false;
+    }
+
+    // already seeded? all three core tables must have data.
+    auto table_has_rows = [&](const char* table_name, bool& has_rows) -> bool
+        {
+            QSqlQuery q(db);
+            if (!q.exec(QString("select count(*) from %1;").arg(table_name)))
+            {
+                m_last_error = q.lastError().text();
+                return false;
+            }
+            if (!q.next())
+            {
+                m_last_error = "count query returned no row";
+                return false;
+            }
+            has_rows = q.value(0).toInt() > 0;
+            return true;
+        };
+
+    bool has_college_rows = false;
+    bool has_souvenir_rows = false;
+    bool has_distance_rows = false;
+    if (!table_has_rows("college", has_college_rows))
+        return false;
+    if (!table_has_rows("souvenir", has_souvenir_rows))
+        return false;
+    if (!table_has_rows("distance", has_distance_rows))
+        return false;
+
+    if (has_college_rows && has_souvenir_rows && has_distance_rows)
+    {
+        std::cout << "4-2 PreLoad data" << std::endl;
+        return true;
+    }
+
+    // data dir comes from db path: .../data/college_tour.db
+    const QString data_dir = QFileInfo(m_db_path).dir().absolutePath();
+    const QString souvenirs_csv = QDir(data_dir).filePath("college_souvenirs.csv");
+    const QString distances_csv = QDir(data_dir).filePath("college_campus_distances.csv");
+
+    if (!import_from_csv_files(souvenirs_csv, distances_csv))
+        return false;
+
+    std::cout << "4-2 Loading data" << std::endl;
 
     return true;
 }

@@ -29,8 +29,9 @@
 
 
 //Update requirements:
-//Distance: Change to one-way query
-//Table: Update shopping and travel history tables
+//Distance: 1.Deduplication
+//Table: 1.Update shopping and travel history tables
+//function: 1.read from file 2.reset
 
 class DataManager :public Manager<DataManager>
 {
@@ -51,6 +52,10 @@ public:
 public:
     //initializes database
     [[nodiscard]] bool init();
+
+    // !not implement yet!
+    //clear database and reload
+    [[nodiscard]] bool reset_database(bool remove_backup_if_success = false);
 
     //returns whether the database connection is currently open and usable
     [[nodiscard]] bool is_open() const;
@@ -73,10 +78,10 @@ public:
     QVector<distance_to> get_distances_from_college(int college_id) const;
 
     //returns the direct distance between two colleges, returns nullopt if no edge exists
-    std::optional<double> get_distance_between_college(int from_college_id, int to_college_id) const;
+    std::optional<double> get_distance_between_college(int college_id_1, int college_id_2) const;
 
     //returns the direct distance between two colleges, returns nullopt if no edge exists
-    std::optional<double> get_distance_between_college(const QString& from_college_name, const QString& to_college_name) const;
+    std::optional<double> get_distance_between_college(const QString& college_name_1, const QString& college_name_2) const;
 
 
 
@@ -133,9 +138,13 @@ public:
 
     //-------------------------------read file-------------------------------------//
 
-    bool add_campus_from_file(const QString& path);
+    bool add_campus_from_file(const QString& path, const QString& name);
 
-    //
+    /*
+    This function returns a list of school initials from a list of college names.
+    This is done by taking the first letter of each word and checking if its uppcase
+    (to avoid "of")
+    */
     QVector<QString> get_initials(const QVector<int>& college_id) const;
 
 
@@ -146,6 +155,8 @@ private:
     bool init_pragmas();
     bool init_schema();
     bool seed_if_empty();
+    bool import_from_csv_files(const QString& souvenirs_csv, const QString& distances_csv);
+    bool import_distances_csv_file(const QString& distances_csv);
 
     QSqlDatabase get_db_or_set_error() const;
     bool prepare_and_exec(QSqlQuery& q, const QString& sql) const;
