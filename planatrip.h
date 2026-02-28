@@ -3,6 +3,7 @@
 #include "data_manager.h" // Add this include
 
 #include <QMainWindow>
+#include <QLabel>
 
 namespace Ui {
 class PlanATrip;
@@ -11,6 +12,9 @@ class PlanATrip;
 class PlanATrip : public QMainWindow
 {
     Q_OBJECT
+
+private:
+    QLabel *bg;
 
 public:
     explicit PlanATrip(QWidget *parent = nullptr);
@@ -28,6 +32,10 @@ private:
     Ui::PlanATrip *ui;
     int startingCollegeId;
     QVector<int> tripStops;          // The list of stops to optimize
+
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif // PLANATRIP_H
