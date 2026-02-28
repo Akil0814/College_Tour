@@ -7,6 +7,7 @@
 #include <QMessageBox>
 
 //For ID_verify
+#include <QDir>
 #include <string>
 #include <cstdint>
 #include <fstream>
@@ -100,7 +101,8 @@ login_window::~login_window() {
     delete ui;
 }
 
-std::string key_path = R"(W:\Coding\College_Tour\data\key.dat)";//change this path to local
+//update key_path to resolve dynamically
+//std::string key_path = R"(W:\Coding\College_Tour\data\key.dat)";
 //user name: cs1d
 //password:abc
 //------------------------------------------ID_verify----------------------------------------------
@@ -147,6 +149,35 @@ static bool read_blob(std::ifstream& in, std::string& s, std::uint32_t len)
     in.read(s.data(), static_cast<std::streamsize>(len));
     return static_cast<bool>(in);
 }
+
+QString try_get_key_path()
+{
+    QDir dir(QDir::current());
+
+    QString data_dir_path;
+    for (int i = 0; i < 8; ++i)
+    {
+        const QString candidate2 = dir.filePath("College_Tour/data");
+        if (QDir(candidate2).exists())
+        {
+            data_dir_path = QDir(candidate2).absolutePath();
+            break;
+        }
+
+        const QString candidate = dir.filePath("data");
+        if (QDir(candidate).exists())
+        {
+            data_dir_path = QDir(candidate).absolutePath();
+            break;
+        }
+
+        if (!dir.cdUp())
+            break;
+    }
+
+    return data_dir_path;
+}
+
 
 bool get_key_from_file(const std::string& filename, std::uint8_t& key_out)
 {
@@ -206,6 +237,9 @@ bool id_verify(std::string i_user_name,std::string i_password)
     if (i_user_name.empty() || i_password.empty())
         return false;
 
+    std::string key_path = try_get_key_path().toStdString() + "/key.dat";
+    std::cout << key_path << std::endl;
+
     std::uint8_t key = 0;
     if (!get_key_from_file(key_path, key))
     {
@@ -257,5 +291,6 @@ bool id_verify(std::string i_user_name,std::string i_password)
 }
 
 //------------------------------------------ID_verify----------------------------------------------
+
 
 
