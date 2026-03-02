@@ -27,6 +27,12 @@
 #include "manager.h"
 #include "data_types.h"
 
+
+//Update requirements:
+//Distance: 1.Deduplication
+//Table: 1.Update shopping and travel history tables
+//function: 1.read from file 2.reset
+
 class DataManager :public Manager<DataManager>
 {
     friend class Manager<DataManager>;
@@ -47,6 +53,10 @@ public:
     //initializes database
     [[nodiscard]] bool init();
 
+    // !not implement yet!
+    //clear database and reload
+    [[nodiscard]] bool reset_database(bool remove_backup_if_success = false);
+
     //returns whether the database connection is currently open and usable
     [[nodiscard]] bool is_open() const;
 
@@ -57,6 +67,8 @@ public:
     
     //returns a list of all colleges currently stored in the database
     QVector<college> get_all_colleges() const;
+    QVector<college> get_all_colleges_have_distances() const;
+
 
     //returns nullopt if not found
     std::optional<int> get_college_id(const QString& college_name) const;
@@ -103,7 +115,7 @@ public:
     std::optional<int> add_college(const QString& new_college_name);
 
     //set the direct distance between two colleges; returns true on success
-    bool set_distance_between_college(int college_id_1, int college_id_2, double miles);
+    bool set_distance_between_college(int from_college_id, int to_college_id, double miles);
 
 
 
@@ -117,8 +129,32 @@ public:
     //price check fail//wrong error message when college_id does not exist
     std::optional<int> add_souvenir(int college_id, const QString& name, double price);
 
+
+    bool adjust_souvenir_price(int college_id, const QString& souvenir_name,double price);
+
+    bool adjust_souvenir_price(int souvenir_id, double price);
+
+
     //return true if successfully deleted
     bool delete_souvenir(int souvenir_id);
+
+    //-------------------------------read file-------------------------------------//
+
+    bool add_campus_from_file(const QString& file_path, const QString& file_name);
+
+    /*
+    This function returns a list of school initials from a list of college names.
+    This is done by taking the first letter of each word and checking if its uppcase
+    (to avoid "of")
+    */
+    QVector<QString> get_initials(const QVector<int>& college_id) const;
+
+    void set_current_trip(const QVector<int>& trip) { current_trip = trip; }
+    QVector<int> get_current_trip() const { return current_trip; }
+
+    void set_current_trip_index(int index) { current_trip_index = index; }
+    int get_current_trip_index() const { return current_trip_index; }
+
 
 
 private:
@@ -127,6 +163,8 @@ private:
     bool init_pragmas();
     bool init_schema();
     bool seed_if_empty();
+    bool import_from_csv_files(const QString& souvenirs_csv, const QString& distances_csv);
+    bool import_distances_csv_file(const QString& distances_csv);
 
     QSqlDatabase get_db_or_set_error() const;
     bool prepare_and_exec(QSqlQuery& q, const QString& sql) const;
@@ -138,6 +176,9 @@ private:
 private:
 
     bool m_init_ed = false;
+
+    QVector<int> current_trip;      // Stores the "True Order" of the trip
+    int current_trip_index = 0;     // Keeps track of where we are in the 5-stop loop
 
     QString m_conn_name = "main";
     QString m_db_path;

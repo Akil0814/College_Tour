@@ -52,7 +52,13 @@ void visit_next(
     // Throw error if next stop is not found | nearest is still sentinal
     if (nearest_campus_id == -1)
     {
-        throw std::runtime_error("No reachable college was found from current campus id:" + std::to_string(current_college_id));
+        // --- GRACEFUL FALLBACK (NO THROWING ERRORS!) ---
+        for (int unvisited_id : remaining_colleges) {
+            visit_order.push_back(unvisited_id);
+            total_distance.push_back(0);
+        }
+        remaining_colleges.clear();
+        return;
     }
 
     // Update state | distance to next campus | visit order | remove from remaining

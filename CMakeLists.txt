@@ -31,8 +31,10 @@ qt_add_executable(College_Tour
     data_types.h
     admin.h admin.cpp
     planatrip.h planatrip.cpp planatrip.ui
+    adminpage.h adminpage.cpp adminpage.ui
 
     route_opt.cpp
+    trip_overview.h trip_overview.cpp trip_overview.ui
 )
 
 target_link_libraries(College_Tour PRIVATE

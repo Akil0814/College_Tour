@@ -1,9 +1,11 @@
 #include "planatrip.h"
 #include "ui_planatrip.h"
 #include "data_manager.h"
+#include "trip_overview.h"
 #include <QMessageBox>
 #include <QListWidget>
 #include <QVector>
+#include <QGraphicsOpacityEffect>
 
 QVector<int> route_optimize(int start_id, QVector<int> destinations);
 
@@ -11,6 +13,15 @@ PlanATrip::PlanATrip(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::PlanATrip)
 {
+    bg = new QLabel(this);
+    bg->setPixmap(QPixmap(":/res/res/saddleback-college-gateway-building-1050x750-compact.png"));
+    bg->setScaledContents(true);
+    bg->resize(size());
+    bg->setStyleSheet("background: transparent;");
+    bg->setGraphicsEffect(new QGraphicsOpacityEffect(bg));
+    auto *effect = new QGraphicsOpacityEffect(bg);
+    effect->setOpacity(0.4);
+    bg->setGraphicsEffect(effect);
     ui->setupUi(this);
 
     // Fill the dropdowns as soon as the window is created
@@ -20,6 +31,12 @@ PlanATrip::PlanATrip(QWidget *parent)
 PlanATrip::~PlanATrip()
 {
     delete ui;
+}
+
+void PlanATrip::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    bg->resize(size());
 }
 
 void PlanATrip::populateColleges()
@@ -33,6 +50,7 @@ void PlanATrip::populateColleges()
 
     // 3. Added a default prompt
     ui->startingPointDropDown->addItem("--- Select Starting College ---");
+    ui->tripStopsDropDown->addItem("--- Select a Stop to Add ---");
 
     // 4. Iterate through the database results and add names to dropdowns
     for (const auto& col : colleges) {
@@ -40,6 +58,7 @@ void PlanATrip::populateColleges()
         ui->tripStopsDropDown->addItem(col.name);
     }
 }
+
 
 void PlanATrip::on_goButton_clicked() {
     if (ui->startingPointDropDown->currentIndex() <= 0) {
@@ -52,11 +71,48 @@ void PlanATrip::on_goButton_clicked() {
         return;
     }
 
-    // Pass the non-negotiable start and the stops to the fixed function
-    QVector<int> optimizedPath = route_optimize(startingCollegeId, tripStops);
+    QString startName = ui->startingPointDropDown->currentText();
+    auto idOpt = DataManager::instance()->get_college_id(startName);
 
-    QMessageBox::information(this, "Route Optimized",
-                             "Shortest path found for " + QString::number(optimizedPath.size()) + " colleges!");
+    if (!idOpt.has_value()) {
+        QMessageBox::critical(this, "Error", "Could not find starting college in database.");
+        return;
+    }
+
+    // Assign the value to the variable your optimizer uses
+    startingCollegeId = idOpt.value();
+
+    // Remove the starting college from the destinations so it doesn't try to visit itself!
+    tripStops.removeAll(startingCollegeId);
+
+    // Just in case the user ONLY added the starting college to the stops list:
+    if (tripStops.isEmpty()) {
+        QMessageBox::warning(this, "Not Enough Stops", "Please add at least one different destination to your trip!");
+        return;
+    }
+
+    // --- ADD THE TRY/CATCH BLOCK HERE ---
+    try {
+        // Pass the non-negotiable start and the stops to the fixed function
+        QVector<int> optimizedPath = route_optimize(startingCollegeId, tripStops);
+
+        DataManager::instance()->set_current_trip(optimizedPath);
+        DataManager::instance()->set_current_trip_index(0);
+
+        // (We can actually delete the QMessageBox here since we are opening the new page immediately!)
+
+        trip_overview *overview = new trip_overview();
+        overview->show();
+        this->close(); // Closes the planner
+
+    } catch (const std::exception &e) {
+        // If the algorithm throws an error, catch it here and show a popup instead of crashing!
+        QMessageBox::critical(this, "Routing Error", "Could not find a valid path! Ensure all selected campuses are connected.");
+
+        // Optional: Print the exact error to the console for your own debugging
+        qDebug() << "Algorithm failed:" << e.what();
+    }
+
 }
 
 void PlanATrip::on_tripStopsDropDown_activated(int index) {
