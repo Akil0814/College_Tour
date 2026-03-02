@@ -126,6 +126,43 @@ QVector<college> DataManager::get_all_colleges() const
 
 }
 
+QVector<college> DataManager::get_all_colleges_have_distances() const
+{
+    QVector<college> out;
+
+    QSqlDatabase db = get_db_or_set_error();
+
+    if (!db.isValid())
+        return out;
+
+    QSqlQuery q(db);
+    const QString sql =
+        "select c.college_id, c.name "
+        "from college c "
+        "where exists ("
+        "    select 1 "
+        "    from distance d "
+        "    where d.a_college_id = c.college_id "
+        "       or d.b_college_id = c.college_id"
+        ") "
+        "order by c.college_id;";
+
+    if (!prepare_and_exec(q, sql))
+        return out;
+
+    while (q.next())
+    {
+        college c;
+        c.college_id = q.value(0).toInt();
+        c.name = q.value(1).toString();
+
+        out.push_back(c);
+    }
+
+    return out;
+}
+
+
 QVector<souvenir> DataManager::get_all_souvenirs() const
 {
     QVector<souvenir> out;

@@ -67,6 +67,8 @@ public:
     
     //returns a list of all colleges currently stored in the database
     QVector<college> get_all_colleges() const;
+    QVector<college> get_all_colleges_have_distances() const;
+
 
     //returns nullopt if not found
     std::optional<int> get_college_id(const QString& college_name) const;
@@ -138,7 +140,7 @@ public:
 
     //-------------------------------read file-------------------------------------//
 
-    bool add_campus_from_file(const QString& path, const QString& name);
+    bool add_campus_from_file(const QString& file_path, const QString& file_name);
 
     /*
     This function returns a list of school initials from a list of college names.
