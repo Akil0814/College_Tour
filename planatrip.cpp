@@ -2,6 +2,7 @@
 #include "ui_planatrip.h"
 #include "data_manager.h"
 #include <QMessageBox>
+#include <QListWidget>
 #include <QVector>
 
 QVector<int> route_optimize(int start_id, QVector<int> destinations);
@@ -40,24 +41,6 @@ void PlanATrip::populateColleges()
     }
 }
 
-void PlanATrip::on_addStopButton_clicked() {
-    // 1. Get the current selection from the dropdown
-    QString selectedName = ui->tripStopsDropDown->currentText();
-
-    // 2. Get the ID from DataManager
-    auto idOpt = DataManager::instance()->get_college_id(selectedName);
-
-    if (idOpt.has_value()) {
-        int id = idOpt.value();
-
-        // 3. Prevent duplicates in the trip
-        if (!tripStops.contains(id)) {
-            tripStops.append(id);
-            ui->listWidget->addItem(selectedName); // Show it to the user
-        }
-    }
-}
-
 void PlanATrip::on_goButton_clicked() {
     if (ui->startingPointDropDown->currentIndex() <= 0) {
         QMessageBox::warning(this, "Selection Required", "Please select a starting college.");
@@ -91,5 +74,23 @@ void PlanATrip::on_tripStopsDropDown_activated(int index) {
         } else {
             QMessageBox::information(this, "Already Added", selectedName + " is already in your trip.");
         }
+    }
+}
+
+// Logic to remove a college when double-clicked
+void PlanATrip::on_listWidget_itemDoubleClicked(QListWidgetItem *item) {
+    if (!item) return;
+
+    QString name = item->text();
+    auto idOpt = DataManager::instance()->get_college_id(name);
+
+    if (idOpt.has_value()) {
+        // Remove the ID from our background calculation list
+        tripStops.removeAll(idOpt.value());
+
+        // Remove the name from the visual UI list
+        delete item;
+
+        qDebug() << "Removed:" << name << "| Remaining stops:" << tripStops.size();
     }
 }
