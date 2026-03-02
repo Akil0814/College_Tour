@@ -1,15 +1,17 @@
 #include "planatrip.h"
 #include "ui_planatrip.h"
 #include "data_manager.h"
+#include "cart_page.h"
 #include <QMessageBox>
 #include <QVector>
 #include <QGraphicsOpacityEffect>
 
 QVector<int> route_optimize(int start_id, QVector<int> destinations);
 
-PlanATrip::PlanATrip(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::PlanATrip)
+PlanATrip::PlanATrip(ShoppingCart* cart, QWidget* parent)
+    : QMainWindow(parent),
+    ui(new Ui::PlanATrip),
+    m_cart(cart)
 {
     bg = new QLabel(this);
     bg->setPixmap(QPixmap(":/res/res/saddleback-college-gateway-building-1050x750-compact.png"));
@@ -21,8 +23,6 @@ PlanATrip::PlanATrip(QWidget *parent)
     effect->setOpacity(0.4);
     bg->setGraphicsEffect(effect);
     ui->setupUi(this);
-
-    // Fill the dropdowns as soon as the window is created
     populateColleges();
 }
 
@@ -56,24 +56,21 @@ void PlanATrip::populateColleges()
     }
 }
 
-void PlanATrip::on_addStopButton_clicked() {
-    // 1. Get the current selection from the dropdown
+void PlanATrip::on_addStopButton_clicked()
+{
     QString selectedName = ui->tripStopsDropDown->currentText();
-
-    // 2. Get the ID from DataManager
     auto idOpt = DataManager::instance()->get_college_id(selectedName);
 
-    if (idOpt.has_value()) {
+    if (idOpt.has_value())
+    {
         int id = idOpt.value();
 
-        // 3. Prevent duplicates in the trip
-        if (!tripStops.contains(id)) {
+        if (!tripStops.contains(id))
+        {
             tripStops.append(id);
-            //ui->listWidget->addItem(selectedName); // Show it to the user
         }
     }
 }
-
 void PlanATrip::on_goButton_clicked() {
     if (ui->startingPointDropDown->currentIndex() <= 0) {
         QMessageBox::warning(this, "Selection Required", "Please select a starting college.");
@@ -90,6 +87,11 @@ void PlanATrip::on_goButton_clicked() {
 
     QMessageBox::information(this, "Route Optimized",
                              "Shortest path found for " + QString::number(optimizedPath.size()) + " colleges!");
+
+    // added open cart popup for one college
+    CartPage dlg(*m_cart, DataManager::instance(), this);
+    dlg.openForCollege(tripStops[0]);   // first stop in the trip
+    dlg.exec();
 }
 
 void PlanATrip::on_tripStopsDropDown_activated(int index) {

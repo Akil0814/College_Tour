@@ -77,7 +77,11 @@ void CartPage::on_btnAdd_clicked()
 void CartPage::on_btnRemove_clicked()
 {
     auto sel = ui->tableCart->selectionModel()->selectedRows();
-    if (sel.isEmpty()) { QMessageBox::warning(this,"Remove","Select a cart item."); return; }
+    if (sel.isEmpty())
+    {
+        QMessageBox::warning(this, "Remove", "Select a cart item.");
+        return;
+    }
 
     int row = sel.first().row();
     auto items = m_cart.items_for_college(m_college_id);
@@ -87,4 +91,7 @@ void CartPage::on_btnRemove_clicked()
     refreshCart();
 }
 
-void CartPage::on_btnClose_clicked(){ close(); }
+void CartPage::on_btnClose_clicked()
+{
+    close();
+}

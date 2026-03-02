@@ -1,6 +1,7 @@
 #ifndef PLANATRIP_H
 #define PLANATRIP_H
 #include "data_manager.h" // Add this include
+#include "shopping_cart.h" //added
 
 #include <QMainWindow>
 #include <QLabel>
@@ -17,7 +18,7 @@ private:
     QLabel *bg;
 
 public:
-    explicit PlanATrip(QWidget *parent = nullptr);
+    explicit PlanATrip(ShoppingCart* cart, QWidget* parent = nullptr); //added shopping cart
     ~PlanATrip();
 
 private slots:
@@ -28,6 +29,7 @@ private slots:
 
 private:
     void populateColleges();
+    ShoppingCart* m_cart = nullptr; //added
 
     Ui::PlanATrip *ui;
     int startingCollegeId;
