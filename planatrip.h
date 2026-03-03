@@ -1,10 +1,11 @@
 #ifndef PLANATRIP_H
 #define PLANATRIP_H
-#include "data_manager.h" // Add this include
-#include "shopping_cart.h" //added
 
 #include <QMainWindow>
 #include <QLabel>
+
+// FIX: Add this line so the compiler knows what a QListWidgetItem is
+class QListWidgetItem;
 
 namespace Ui {
 class PlanATrip;
@@ -18,24 +19,20 @@ private:
     QLabel *bg;
 
 public:
-    explicit PlanATrip(ShoppingCart* cart, QWidget* parent = nullptr); //added shopping cart
+    explicit PlanATrip(QWidget *parent = nullptr);
     ~PlanATrip();
 
 private slots:
-    void on_addStopButton_clicked(); // Slot for the "+" button
     void on_goButton_clicked();      // Slot to start optimization
     // This function triggers whenever the user selects a school from the list
     void on_tripStopsDropDown_activated(int index);
-    void on_startingPointDropDown_activated(int index);
-
+    void on_listWidget_itemDoubleClicked(QListWidgetItem *item);
 private:
     void populateColleges();
-    ShoppingCart* m_cart = nullptr; //added
 
     Ui::PlanATrip *ui;
-    int startingCollegeId = -1; //initialized
+    int startingCollegeId;
     QVector<int> tripStops;          // The list of stops to optimize
-
 
 
 protected:

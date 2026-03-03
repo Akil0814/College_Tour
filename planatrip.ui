@@ -78,6 +78,9 @@ background-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
          <item>
+          <widget class="QListWidget" name="listWidget"/>
+         </item>
+         <item>
           <spacer name="buttonSpacer">
            <property name="orientation">
             <enum>Qt::Orientation::Vertical</enum>

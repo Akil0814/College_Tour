@@ -149,6 +149,12 @@ public:
     */
     QVector<QString> get_initials(const QVector<int>& college_id) const;
 
+    void set_current_trip(const QVector<int>& trip) { current_trip = trip; }
+    QVector<int> get_current_trip() const { return current_trip; }
+
+    void set_current_trip_index(int index) { current_trip_index = index; }
+    int get_current_trip_index() const { return current_trip_index; }
+
 
 
 private:
@@ -170,6 +176,9 @@ private:
 private:
 
     bool m_init_ed = false;
+
+    QVector<int> current_trip;      // Stores the "True Order" of the trip
+    int current_trip_index = 0;     // Keeps track of where we are in the 5-stop loop
 
     QString m_conn_name = "main";
     QString m_db_path;

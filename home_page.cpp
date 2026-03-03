@@ -3,6 +3,8 @@
 #include "cart.h"
 #include "./ui_homepage.h"
 #include "planatrip.h"
+#include "adminpage.h"
+#include "login_window.h"
 
 #include "login_window.h"
 #include <QInputDialog>
@@ -105,11 +107,17 @@ void HomePage::on_student_button_clicked() {
 }
 
 void HomePage::on_admin_button_clicked() {
-    // Reserve the login window for Admins only
-    login_window *login = new login_window(this);
-    login->setAttribute(Qt::WA_DeleteOnClose);
-    login->setWindowModality(Qt::ApplicationModal);
-    login->show();
+    // Open the login window and wait for the user
+    login_window login(this);
+
+    // If id_verify succeeds, the login window calls this->accept()
+    if (login.exec() == QDialog::Accepted) {
+
+        // Login was successful! Open the Admin Page
+        adminpage *adminWindow = new adminpage();
+        adminWindow->setAttribute(Qt::WA_DeleteOnClose);
+        adminWindow->show();
+    }
 }
 
 
