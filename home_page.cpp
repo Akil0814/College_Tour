@@ -47,8 +47,6 @@ HomePage::HomePage(QWidget *parent)
     studentButton = new QPushButton("STUDENT PORTAL");
     adminButton = new QPushButton("ADMIN LOGIN");
 
-    addItemButton = new QPushButton("ADD SOUVENIR TEST"); //added
-    grandTotalButton = new QPushButton("TOTAL SPENT"); //added
 
 
 
@@ -60,9 +58,6 @@ HomePage::HomePage(QWidget *parent)
     sidebarLayout->addStretch(1);
     sidebarLayout->addWidget(studentButton);
     sidebarLayout->addWidget(adminButton);
-
-    sidebarLayout->addWidget(addItemButton);
-    sidebarLayout->addWidget(grandTotalButton);
 
     mainLayout->addWidget(sidebarFrame);
     mainLayout->addStretch(1);
@@ -103,7 +98,7 @@ void HomePage::resizeEvent(QResizeEvent *event) {
 
 void HomePage::on_student_button_clicked() {
     // Direct routing for students to the trip planner
-    PlanATrip *tripWindow = new PlanATrip(&m_cart, this);
+    PlanATrip *tripWindow = new PlanATrip(&m_cart, this); //added
     tripWindow->setAttribute(Qt::WA_DeleteOnClose);
     tripWindow->setWindowModality(Qt::ApplicationModal);
     tripWindow->show();

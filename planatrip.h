@@ -26,14 +26,16 @@ private slots:
     void on_goButton_clicked();      // Slot to start optimization
     // This function triggers whenever the user selects a school from the list
     void on_tripStopsDropDown_activated(int index);
+    void on_startingPointDropDown_activated(int index);
 
 private:
     void populateColleges();
     ShoppingCart* m_cart = nullptr; //added
 
     Ui::PlanATrip *ui;
-    int startingCollegeId;
+    int startingCollegeId = -1; //initialized
     QVector<int> tripStops;          // The list of stops to optimize
+
 
 
 protected:

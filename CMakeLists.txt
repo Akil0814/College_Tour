@@ -40,9 +40,6 @@ qt_add_executable(College_Tour
 
     route_opt.cpp
 
-    cart.h
-    cart.cpp
-
     cart_page.ui
     cart_page.h
     cart_page.cpp

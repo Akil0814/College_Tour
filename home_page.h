@@ -44,9 +44,6 @@ private:
     QPushButton *studentButton;
     QPushButton *adminButton;
 
-    QPushButton* addItemButton = nullptr; //added
-    QPushButton* grandTotalButton = nullptr; //added
-
     ShoppingCart m_cart;
     CartTester* m_cartTester = nullptr;
 

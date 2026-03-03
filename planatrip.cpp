@@ -85,6 +85,14 @@ void PlanATrip::on_goButton_clicked() {
     // Pass the non-negotiable start and the stops to the fixed function
     QVector<int> optimizedPath = route_optimize(startingCollegeId, tripStops);
 
+    //added
+    for (int collegeId : optimizedPath)
+    {
+        CartPage dlg(*m_cart, DataManager::instance(), this);
+        dlg.openForCollege(collegeId);
+        dlg.exec();  // user shops, then closes -> next stop pops up
+    }
+
     QMessageBox::information(this, "Route Optimized",
                              "Shortest path found for " + QString::number(optimizedPath.size()) + " colleges!");
 
@@ -92,6 +100,7 @@ void PlanATrip::on_goButton_clicked() {
     CartPage dlg(*m_cart, DataManager::instance(), this);
     dlg.openForCollege(tripStops[0]);   // first stop in the trip
     dlg.exec();
+
 }
 
 void PlanATrip::on_tripStopsDropDown_activated(int index) {
@@ -110,4 +119,16 @@ void PlanATrip::on_tripStopsDropDown_activated(int index) {
             QMessageBox::information(this, "Already Added", selectedName + " is already in your trip.");
         }
     }
+}
+
+//added
+void PlanATrip::on_startingPointDropDown_activated(int index)
+{
+    if (index <= 0) return;
+
+    QString selectedName = ui->startingPointDropDown->currentText();
+    auto idOpt = DataManager::instance()->get_college_id(selectedName);
+
+    if (idOpt.has_value())
+        startingCollegeId = idOpt.value();
 }
