@@ -100,7 +100,11 @@ void HomePage::resizeEvent(QResizeEvent *event) {
 
 void HomePage::on_student_button_clicked() {
     // Direct routing for students to the trip planner
-    PlanATrip *tripWindow = new PlanATrip(&m_cart, this); //added
+
+    PlanATrip *tripWindow = new PlanATrip(this); //Akeli->testing longin function id_verify()
+
+    //PlanATrip* tripWindow = new PlanATrip(&m_cart, this); //added
+
     tripWindow->setAttribute(Qt::WA_DeleteOnClose);
     tripWindow->setWindowModality(Qt::ApplicationModal);
     tripWindow->show();

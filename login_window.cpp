@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include <vector>
 #include <optional>
 //For ID_verify
@@ -133,6 +134,21 @@ static std::string xor_copy(const std::string& in, std::uint8_t key)
     return out;
 }
 
+static std::string bytes_to_hex(const std::string& s)
+{
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        const auto byte = static_cast<unsigned int>(
+            static_cast<unsigned char>(s[i]));
+        oss << std::setw(2) << byte;
+        if (i + 1 < s.size())
+            oss << ' ';
+    }
+    return oss.str();
+}
+
 static bool read_u32(std::ifstream& in, std::uint32_t& v)
 {
     in.read(reinterpret_cast<char*>(&v), sizeof(v));
@@ -240,7 +256,7 @@ bool id_verify(std::string i_user_name,std::string i_password)
 {
     if (i_user_name.empty() || i_password.empty())
         return false;
-
+    std::cout<<"1:"<<std::endl;
     std::string key_path = try_get_key_path().toStdString() + "/key.dat";
     std::cout << key_path << std::endl;
 
@@ -250,6 +266,7 @@ bool id_verify(std::string i_user_name,std::string i_password)
         std::cerr << "get_key_from_file failed\n";
         return false;
     }
+    std::cout<<"2:"<<std::endl;
 
     std::ifstream in(key_path, std::ios::binary);
     if (!in)
@@ -257,6 +274,7 @@ bool id_verify(std::string i_user_name,std::string i_password)
         std::cerr << "open key.dat failed\n";
         return false;
     }
+    std::cout<<"3:"<<std::endl;
 
     std::uint32_t file_magic = 0;
     if (!read_u32(in, file_magic)) return false;
@@ -265,6 +283,7 @@ bool id_verify(std::string i_user_name,std::string i_password)
         std::cerr << "bad file magic\n";
         return false;
     }
+    std::cout<<"4:"<<std::endl;
 
     std::uint8_t file_version = 0;
     if (!read_u8(in, file_version)) return false;
@@ -273,25 +292,50 @@ bool id_verify(std::string i_user_name,std::string i_password)
         std::cerr << "unsupported version\n";
         return false;
     }
+    std::cout<<"5:"<<std::endl;
 
     std::uint32_t u_len = 0, p_len = 0;
 
     if (!read_u32(in, u_len))
         return false;
+    std::cout<<"6:"<<std::endl;
+
     std::string u_enc_stored;
     if (!read_blob(in, u_enc_stored, u_len))
         return false;
+    std::cout<<"7:"<<std::endl;
+
 
     if (!read_u32(in, p_len))
         return false;
+    std::cout<<"8:"<<std::endl;
+    
     std::string p_enc_stored;
     if (!read_blob(in, p_enc_stored, p_len))
         return false;
+    std::cout<<"9:"<<std::endl;
+
 
     const std::string u_enc_input = xor_copy(i_user_name, key);
-    const std::string p_enc_input = xor_copy(i_password, key);
+    std::cout<<"10:"<<std::endl;
 
-    return (u_enc_input == u_enc_stored) && (p_enc_input == p_enc_stored);
+    const std::string p_enc_input = xor_copy(i_password, key);
+    std::cout<<"11:"<<std::endl;
+
+    std::cout << "u_enc_input : " << bytes_to_hex(u_enc_input) << std::endl;
+    std::cout << "u_enc_stored: " << bytes_to_hex(u_enc_stored) << std::endl;
+    std::cout << "p_enc_input : " << bytes_to_hex(p_enc_input) << std::endl;
+    std::cout << "p_enc_stored: " << bytes_to_hex(p_enc_stored) << std::endl;
+
+    const bool user_ok = (u_enc_input == u_enc_stored);
+    const bool pass_ok = (p_enc_input == p_enc_stored);
+    const bool verify_ok = user_ok && pass_ok;
+
+    std::cout << "user_ok=" << user_ok
+              << ", pass_ok=" << pass_ok
+              << ", verify_ok=" << verify_ok << std::endl;
+
+    return verify_ok;
 }
 
 //------------------------------------------ID_verify----------------------------------------------
