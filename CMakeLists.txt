@@ -35,6 +35,12 @@ qt_add_executable(College_Tour
 
     route_opt.cpp
     trip_overview.h trip_overview.cpp trip_overview.ui
+    trip_overview.h trip_overview.cpp trip_overview.ui
+    cart.h cart.cpp
+    cart_page.h cart_page.cpp cart_page.ui
+    shopping_cart.h shopping_cart.cpp
+    distance_tracker.h distance_tracker.cpp
+    trip_summary.h trip_summary.cpp trip_summary.ui
 )
 
 target_link_libraries(College_Tour PRIVATE
