@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QLabel>
+#include "shopping_cart.h"
 
 // FIX: Add this line so the compiler knows what a QListWidgetItem is
 class QListWidgetItem;
@@ -19,7 +20,7 @@ private:
     QLabel *bg;
 
 public:
-    explicit PlanATrip(QWidget *parent = nullptr);
+    explicit PlanATrip(ShoppingCart* m_cart, QWidget *parent = nullptr);
     ~PlanATrip();
 
 private slots:
@@ -33,6 +34,9 @@ private:
     Ui::PlanATrip *ui;
     int startingCollegeId;
     QVector<int> tripStops;          // The list of stops to optimize
+
+    ShoppingCart* m_cart = nullptr;
+
 
 
 protected:

@@ -9,7 +9,7 @@
 
 QVector<int> route_optimize(int start_id, QVector<int> destinations);
 
-PlanATrip::PlanATrip(QWidget *parent)
+PlanATrip::PlanATrip(ShoppingCart* m_cart, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::PlanATrip)
 {
