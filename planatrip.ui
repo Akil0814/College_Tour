@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>515</width>
-    <height>413</height>
+    <height>474</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -78,9 +78,6 @@ background-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
          <item>
-          <widget class="QListWidget" name="listWidget"/>
-         </item>
-         <item>
           <spacer name="buttonSpacer">
            <property name="orientation">
             <enum>Qt::Orientation::Vertical</enum>
@@ -92,6 +89,48 @@ background-color: rgb(255, 255, 255);</string>
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="premadeLabel">
+           <property name="styleSheet">
+            <string notr="true">font-size: 16px; font-weight: bold;
+color: rgb(0, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string>Premade Trips</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="premadeTripsDropDown">
+           <property name="styleSheet">
+            <string notr="true">color: rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>-- Select a Pre-made Trip --</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Pre-made Trip 1 (Start: Saddleback)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Pre-made Trip 2 (Start: UCI)</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="listWidget">
+           <property name="styleSheet">
+            <string notr="true">color: rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);</string>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="goButton">

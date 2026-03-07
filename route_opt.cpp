@@ -39,6 +39,11 @@ void visit_next(
         // Get distance between current college and next canidate | nullptr if no valid edge
         auto distance = data_manager.get_distance_between_college(current_college_id, next_campus_id);
 
+        //Fix if database returns nothing check Next -> Current
+        if (!distance.has_value()) {
+            distance = data_manager.get_distance_between_college(next_campus_id, current_college_id);
+        }
+
         // Check if distance is valid and check if its the current smallest | always true on first iteration
         if (distance.has_value() && *distance < nearest_campus_dist)
         {

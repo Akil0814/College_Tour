@@ -66,6 +66,10 @@ void PlanATrip::on_goButton_clicked() {
         return;
     }
 
+    if (this->parentWidget()) {
+        this->parentWidget()->hide();
+    }
+
     if (tripStops.isEmpty()) {
         QMessageBox::warning(this, "Empty Trip", "Please add at least one stop to your trip.");
         return;
@@ -91,7 +95,6 @@ void PlanATrip::on_goButton_clicked() {
         return;
     }
 
-    // --- ADD THE TRY/CATCH BLOCK HERE ---
     try {
         // Pass the non-negotiable start and the stops to the fixed function
         QVector<int> optimizedPath = route_optimize(startingCollegeId, tripStops);
@@ -115,10 +118,36 @@ void PlanATrip::on_goButton_clicked() {
 
 }
 
+// --- GUARDRAIL 2: Cannot change start to a college already in the stops list ---
+void PlanATrip::on_startingPointDropDown_activated(int index) {
+    if (index <= 0) return;
+
+    QString selectedName = ui->startingPointDropDown->currentText();
+    auto idOpt = DataManager::instance()->get_college_id(selectedName);
+
+    if (idOpt.has_value()) {
+        int id = idOpt.value();
+
+        // If the newly selected start is already in the destination list
+        if (tripStops.contains(id)) {
+            QMessageBox::warning(this, "Conflict", selectedName + " is already in your Destinations list.\n\nPlease double-click it in the list to remove it before setting it as your start.");
+            ui->startingPointDropDown->setCurrentIndex(0); // Reset back to default
+        }
+    }
+}
+
 void PlanATrip::on_tripStopsDropDown_activated(int index) {
     if (index <= 0) return;
 
     QString selectedName = ui->tripStopsDropDown->currentText();
+
+    // --- GUARDRAIL 1: Cannot add the starting college to stops ---
+    if (selectedName == ui->startingPointDropDown->currentText()) {
+        QMessageBox::warning(this, "Invalid Stop", "You cannot add your Starting College as a destination stop.");
+        ui->tripStopsDropDown->setCurrentIndex(0); // Reset dropdown
+        return;
+    }
+
     auto idOpt = DataManager::instance()->get_college_id(selectedName);
 
     if (idOpt.has_value()) {
@@ -127,8 +156,10 @@ void PlanATrip::on_tripStopsDropDown_activated(int index) {
         if (!tripStops.contains(id)) {
             tripStops.append(id);
             ui->listWidget->addItem(selectedName);
+            ui->tripStopsDropDown->setCurrentIndex(0); // Reset dropdown after successful add
         } else {
             QMessageBox::information(this, "Already Added", selectedName + " is already in your trip.");
+            ui->tripStopsDropDown->setCurrentIndex(0);
         }
     }
 }
@@ -148,5 +179,72 @@ void PlanATrip::on_listWidget_itemDoubleClicked(QListWidgetItem *item) {
         delete item;
 
         qDebug() << "Removed:" << name << "| Remaining stops:" << tripStops.size();
+    }
+}
+
+void PlanATrip::on_premadeTripsDropDown_activated(int index) {
+    if (index <= 0) return; // Ignore the placeholder
+
+    // 1. Clear any existing selections
+    tripStops.clear();
+    ui->listWidget->clear();
+
+    QString startCollege;
+    QStringList stops;
+
+    // 2. Define the exact lists using the CSV strings
+    if (index == 1) {
+        startCollege = "Saddleback College";
+        stops << "Arizona State University"
+              << "Massachusetts Institute of Technology (MIT)"
+              << "Northwestern"
+              << "Ohio State University"
+              << "University of  Michigan"
+              << "University of California, Irvine (UCI)"
+              << "University of California, Los Angeles (UCLA)"
+              << "University of Oregon"
+              << "University of the Pacific"
+              << "University of Wisconsin";
+
+    } else if (index == 2) {
+        startCollege = "University of California, Irvine (UCI)";
+        stops << "Massachusetts Institute of Technology (MIT)"
+              << "Northwestern"
+              << "Ohio State University"
+              << "University of  Michigan"
+              << "University of California, Los Angeles (UCLA)"
+              << "University of Oregon"
+              << "University of the Pacific"
+              << "University of Wisconsin"
+              << "Arizona State University"
+              << "Saddleback College"
+              << "California State University, Fullerton"
+              << "University of Texas";
+    }
+
+    // 3. Set the Starting College Dropdown
+    int startIndex = ui->startingPointDropDown->findText(startCollege, Qt::MatchExactly);
+    if (startIndex != -1) {
+        ui->startingPointDropDown->setCurrentIndex(startIndex);
+        // Set the backend variable since we skipped the manual user click
+        auto startIdOpt = DataManager::instance()->get_college_id(startCollege);
+        if (startIdOpt.has_value()) {
+            startingCollegeId = startIdOpt.value();
+        }
+    } else {
+        qDebug() << "Warning: Could not find start college in dropdown:" << startCollege;
+    }
+
+    // 4. Add the destinations to the list widget and backend vector
+    for (const QString& stopName : stops) {
+        auto idOpt = DataManager::instance()->get_college_id(stopName);
+
+        if (idOpt.has_value()) {
+            tripStops.append(idOpt.value());
+            ui->listWidget->addItem(stopName);
+        } else {
+            // If there's a typo, it prints here!
+            qDebug() << "DB Mismatch Warning: Could not find ID for:" << stopName;
+        }
     }
 }

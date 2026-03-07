@@ -27,6 +27,9 @@ private slots:
     // This function triggers whenever the user selects a school from the list
     void on_tripStopsDropDown_activated(int index);
     void on_listWidget_itemDoubleClicked(QListWidgetItem *item);
+    void on_startingPointDropDown_activated(int index);
+    void on_premadeTripsDropDown_activated(int index);
+
 private:
     void populateColleges();
 
