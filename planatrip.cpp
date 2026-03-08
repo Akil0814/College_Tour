@@ -2,6 +2,8 @@
 #include "ui_planatrip.h"
 #include "data_manager.h"
 #include "trip_overview.h"
+#include "cart_page.h"
+
 #include <QMessageBox>
 #include <QListWidget>
 #include <QVector>
@@ -9,9 +11,10 @@
 
 QVector<int> route_optimize(int start_id, QVector<int> destinations);
 
-PlanATrip::PlanATrip(ShoppingCart* m_cart, QWidget *parent)
+PlanATrip::PlanATrip(ShoppingCart* cart, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::PlanATrip)
+    , m_cart(cart)
 {
     bg = new QLabel(this);
     bg->setPixmap(QPixmap(":/res/res/saddleback-college-gateway-building-1050x750-compact.png"));
@@ -149,4 +152,34 @@ void PlanATrip::on_listWidget_itemDoubleClicked(QListWidgetItem *item) {
 
         qDebug() << "Removed:" << name << "| Remaining stops:" << tripStops.size();
     }
+}
+
+//added
+void PlanATrip::on_btnTestCart_clicked()
+{
+    QMessageBox::information(this, "Debug", "test cart clicked");
+
+    if (!m_cart)
+    {
+        QMessageBox::warning(this, "Debug", "m_cart is null (not passed in)");
+        return;
+    }
+
+    auto dm = DataManager::instance();
+    if (!dm)
+    {
+        QMessageBox::warning(this, "Debug", "DataManager is null");
+        return;
+    }
+
+    auto idOpt = dm->get_college_id("Saddleback College");
+    if (!idOpt.has_value())
+    {
+        QMessageBox::warning(this, "Error", "Could not find Saddleback College.");
+        return;
+    }
+
+    CartPage dlg(*m_cart, dm, this);
+    dlg.openForCollege(idOpt.value());
+    dlg.exec();
 }

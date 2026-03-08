@@ -20,7 +20,7 @@ private:
     QLabel *bg;
 
 public:
-    explicit PlanATrip(ShoppingCart* m_cart, QWidget *parent = nullptr);
+    explicit PlanATrip(ShoppingCart* cart, QWidget* parent = nullptr);
     ~PlanATrip();
 
 private slots:
@@ -28,6 +28,8 @@ private slots:
     // This function triggers whenever the user selects a school from the list
     void on_tripStopsDropDown_activated(int index);
     void on_listWidget_itemDoubleClicked(QListWidgetItem *item);
+
+    void on_btnTestCart_clicked(); //added
 private:
     void populateColleges();
 

@@ -6,6 +6,7 @@
 #include "adminpage.h"
 #include "login_window.h"
 
+#include "shopping_cart.h"
 #include "login_window.h"
 #include <QInputDialog>
 #include <QMessageBox>
@@ -101,7 +102,7 @@ void HomePage::resizeEvent(QResizeEvent *event) {
 void HomePage::on_student_button_clicked() {
     // Direct routing for students to the trip planner
 
-    PlanATrip *tripWindow = new PlanATrip(this); //Akeli->testing longin function id_verify()
+    PlanATrip *tripWindow = new PlanATrip(&m_cart, this); //Akeli->testing longin function id_verify()
 
     //PlanATrip* tripWindow = new PlanATrip(&m_cart, this); //added
 

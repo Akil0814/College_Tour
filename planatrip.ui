@@ -81,6 +81,13 @@ background-color: rgb(255, 255, 255);</string>
           <widget class="QListWidget" name="listWidget"/>
          </item>
          <item>
+          <widget class="QPushButton" name="btnTestCart">
+           <property name="text">
+            <string>Look at Saddleback's Cart</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="buttonSpacer">
            <property name="orientation">
             <enum>Qt::Orientation::Vertical</enum>

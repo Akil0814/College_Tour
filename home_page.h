@@ -12,7 +12,6 @@
 
 #include "shopping_cart.h"
 
-class CartTester; //added
 
 
 QT_BEGIN_NAMESPACE
@@ -45,7 +44,6 @@ private:
     QPushButton *adminButton;
 
     ShoppingCart m_cart;
-    CartTester* m_cartTester = nullptr;
 
 };
 #endif
