@@ -13,31 +13,40 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget {
+    background-color:;
+    color: #E53935;
+}</string>
+  </property>
   <widget class="QLabel" name="labelCollege">
    <property name="geometry">
     <rect>
-     <x>330</x>
+     <x>-60</x>
      <y>0</y>
-     <width>101</width>
+     <width>881</width>
      <height>51</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
+     <pointsize>22</pointsize>
     </font>
    </property>
    <property name="text">
-    <string>College:</string>
+    <string>College Page</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignCenter</set>
    </property>
   </widget>
   <widget class="QTableWidget" name="tableSouvenirs">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>60</y>
-     <width>301</width>
-     <height>431</height>
+     <y>130</y>
+     <width>201</width>
+     <height>251</height>
     </rect>
    </property>
    <property name="font">
@@ -45,30 +54,58 @@
      <pointsize>16</pointsize>
     </font>
    </property>
-   <column>
-    <property name="text">
-     <string>ID</string>
-    </property>
-   </column>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="columnCount">
+    <number>2</number>
+   </property>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="verticalHeaderCascadingSectionResizes">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderDefaultSectionSize">
+    <number>30</number>
+   </attribute>
    <column>
     <property name="text">
      <string>Souviner</string>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
+    </property>
    </column>
    <column>
     <property name="text">
-     <string>Price</string>
+     <string>Cost</string>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
    </column>
   </widget>
   <widget class="QSpinBox" name="spinQty">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>510</y>
+     <x>20</x>
+     <y>400</y>
      <width>42</width>
      <height>22</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>15</pointsize>
+    </font>
    </property>
    <property name="minimum">
     <number>1</number>
@@ -77,8 +114,8 @@
   <widget class="QPushButton" name="btnAdd">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>510</y>
+     <x>100</x>
+     <y>400</y>
      <width>141</width>
      <height>24</height>
     </rect>
@@ -101,6 +138,11 @@
      <height>24</height>
     </size>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>15</pointsize>
+    </font>
+   </property>
    <property name="styleSheet">
     <string notr="true">QPushButton {
     padding: 0px 8px;     /* NO vertical padding */
@@ -119,10 +161,10 @@
   <widget class="QTableWidget" name="tableCart">
    <property name="geometry">
     <rect>
-     <x>360</x>
-     <y>60</y>
+     <x>350</x>
+     <y>130</y>
      <width>391</width>
-     <height>431</height>
+     <height>251</height>
     </rect>
    </property>
    <property name="font">
@@ -130,38 +172,69 @@
      <pointsize>10</pointsize>
     </font>
    </property>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>true</bool>
+   </attribute>
    <attribute name="horizontalHeaderMinimumSectionSize">
     <number>19</number>
+   </attribute>
+   <attribute name="horizontalHeaderStretchLastSection">
+    <bool>false</bool>
    </attribute>
    <column>
     <property name="text">
      <string>Souvenir</string>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
    </column>
    <column>
     <property name="text">
      <string>Qty</string>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
+    </property>
    </column>
    <column>
     <property name="text">
      <string>Unit</string>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
    </column>
    <column>
     <property name="text">
      <string>Subtotal</string>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
+    </property>
    </column>
   </widget>
   <widget class="QPushButton" name="btnRemove">
    <property name="geometry">
     <rect>
-     <x>600</x>
-     <y>510</y>
-     <width>141</width>
+     <x>550</x>
+     <y>400</y>
+     <width>181</width>
      <height>24</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>15</pointsize>
+    </font>
    </property>
    <property name="styleSheet">
     <string notr="true">QPushButton {
@@ -172,17 +245,22 @@
 }</string>
    </property>
    <property name="text">
-    <string>Remove</string>
+    <string>Remove Selected</string>
    </property>
   </widget>
   <widget class="QLabel" name="labelCampusTotal">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>520</y>
-     <width>141</width>
-     <height>16</height>
+     <x>20</x>
+     <y>540</y>
+     <width>171</width>
+     <height>31</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>18</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>Campus Total: $</string>
@@ -191,11 +269,16 @@
   <widget class="QLabel" name="labelGrandTotal">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>600</y>
-     <width>141</width>
-     <height>16</height>
+     <x>20</x>
+     <y>590</y>
+     <width>191</width>
+     <height>31</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>18</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>Grand Total: $</string>
@@ -204,11 +287,16 @@
   <widget class="QPushButton" name="btnClose">
    <property name="geometry">
     <rect>
-     <x>650</x>
-     <y>590</y>
-     <width>100</width>
+     <x>610</x>
+     <y>560</y>
+     <width>141</width>
      <height>24</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>15</pointsize>
+    </font>
    </property>
    <property name="styleSheet">
     <string notr="true">QPushButton {
@@ -219,7 +307,61 @@
 }</string>
    </property>
    <property name="text">
-    <string>Close</string>
+    <string>Next College</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="labelCollegeSouvenirList">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>90</y>
+     <width>191</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>131</width>
+     <height>16</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>200</width>
+     <height>200</height>
+    </size>
+   </property>
+   <property name="sizeIncrement">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>20</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>College Souvenirs</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>89</y>
+     <width>261</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>20</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Your Cart for Current College</string>
    </property>
   </widget>
  </widget>

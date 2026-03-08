@@ -1,97 +1,241 @@
 #include "cart_page.h"
 #include "ui_cart_page.h"
 #include "data_manager.h"
+
+#include <QHeaderView>
 #include <QMessageBox>
 #include <QTableWidgetItem>
+#include <optional>
 
 CartPage::CartPage(ShoppingCart& cart, DataManager* dm, QWidget* parent)
-    : QDialog(parent), ui(new Ui::CartPage), m_cart(cart), m_dm(dm)
+    : QDialog(parent),
+    ui(new Ui::CartPage),
+    m_cart(cart),
+    m_dm(dm)
 {
     ui->setupUi(this);
+
+    //setting font of output in tables
+    QFont tableFont("Segoe UI", 17);   // change 12 to whatever size you want
+    ui->tableSouvenirs->setFont(tableFont);
+    ui->tableCart->setFont(tableFont);
+
+    setWindowTitle("Campus Page");
+
+    //making the columns evenly distrubted
+    ui->tableSouvenirs->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableSouvenirs->verticalHeader()->setVisible(false);
+    ui->tableSouvenirs->setAlternatingRowColors(true);
+
+    // left table: souvenirs for this campus
+    ui->tableSouvenirs->setColumnCount(2);
+    ui->tableSouvenirs->setHorizontalHeaderLabels(QStringList() << "Souvenir" << "Cost");
+
     ui->tableSouvenirs->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableSouvenirs->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableSouvenirs->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableSouvenirs->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableSouvenirs->verticalHeader()->setVisible(false);
+
+    // right table: items already bought at this campus
+    ui->tableCart->setColumnCount(4);
+    ui->tableCart->setHorizontalHeaderLabels(
+        QStringList() << "Souvenir" << "Qty" << "Unit Price" << "Subtotal"
+        );
     ui->tableCart->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableCart->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableCart->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableCart->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableCart->verticalHeader()->setVisible(false);
+
+    ui->spinQty->setMinimum(1);
+    ui->spinQty->setValue(1);
+
+    ui->labelCollege->setText("Campus Page");
+    ui->labelCampusTotal->setText("Campus Total: $0.00");
+    ui->labelGrandTotal->setText("Grand Total: $0.00");
 }
 
-CartPage::~CartPage(){ delete ui; }
+CartPage::~CartPage()
+{
+    delete ui;
+}
 
 void CartPage::openForCollege(int college_id)
 {
     m_college_id = college_id;
-    ui->labelCollege->setText("College ID: " + QString::number(college_id));
+
+    refreshHeader();
     refreshSouvenirs();
     refreshCart();
+}
+
+void CartPage::refreshHeader()
+{
+    if (!m_dm || m_college_id < 0)
+    {
+        ui->labelCollege->setText("Unknown Campus");
+        return;
+    }
+
+    std::optional<QString> nameOpt = m_dm->get_college_name(m_college_id);
+
+    if (nameOpt.has_value())
+        ui->labelCollege->setText("College: " + nameOpt.value());
+    else
+        ui->labelCollege->setText("College: Unknown Campus");
+
+    QVector<int> fullTrip = DataManager::instance()->get_current_trip();
+    int currentIndex = DataManager::instance()->get_current_trip_index();
+
+    //middle colleges in trip will say next college, last college will tell to finish trip
+    if (currentIndex >= 0 && currentIndex == fullTrip.size() - 1)
+        ui->btnClose->setText("Finish Trip");
+    else
+        ui->btnClose->setText("Next College");
 }
 
 void CartPage::refreshSouvenirs()
 {
     ui->tableSouvenirs->setRowCount(0);
-    auto souvenirs = m_dm->get_all_souvenirs_from_college(m_college_id);
-    ui->tableSouvenirs->setRowCount(souvenirs.size());
 
-    for (int i = 0; i < souvenirs.size(); ++i)
+    if (!m_dm || m_college_id < 0)
+        return;
+
+    QVector<souvenir> souvenirs = m_dm->get_all_souvenirs_from_college(m_college_id);
+
+    for (int row = 0; row < souvenirs.size(); ++row)
     {
-        const auto& s = souvenirs[i];
-        ui->tableSouvenirs->setItem(i, 0, new QTableWidgetItem(QString::number(s.souvenir_id)));
-        ui->tableSouvenirs->setItem(i, 1, new QTableWidgetItem(s.name));
-        ui->tableSouvenirs->setItem(i, 2, new QTableWidgetItem("$" + QString::number(s.price, 'f', 2)));
+        const souvenir& s = souvenirs[row];
+        ui->tableSouvenirs->insertRow(row);
+
+        QTableWidgetItem* nameItem = new QTableWidgetItem(s.name);
+        nameItem->setData(Qt::UserRole, s.souvenir_id);   // hidden ID
+
+        ui->tableSouvenirs->setItem(row, 0, nameItem);
+        ui->tableSouvenirs->setItem(row, 1, new QTableWidgetItem("$" + QString::number(s.price, 'f', 2)));
     }
 }
 
 void CartPage::refreshCart()
 {
     ui->tableCart->setRowCount(0);
-    auto items = m_cart.items_for_college(m_college_id);
-    ui->tableCart->setRowCount(items.size());
 
-    for (int i = 0; i < items.size(); ++i)
+    if (m_college_id < 0)
+        return;
+
+    QVector<ShoppingCart::Item> items = m_cart.items_for_college(m_college_id);
+
+    for (int row = 0; row < items.size(); ++row)
     {
-        const auto& it = items[i];
-        double subtotal = it.unit_price * it.quantity;
-        ui->tableCart->setItem(i, 0, new QTableWidgetItem(it.name));
-        ui->tableCart->setItem(i, 1, new QTableWidgetItem(QString::number(it.quantity)));
-        ui->tableCart->setItem(i, 2, new QTableWidgetItem("$" + QString::number(it.unit_price, 'f', 2)));
-        ui->tableCart->setItem(i, 3, new QTableWidgetItem("$" + QString::number(subtotal, 'f', 2)));
+        const ShoppingCart::Item& item = items[row];
+        double subtotal = item.unit_price * item.quantity;
+
+        ui->tableCart->insertRow(row);
+
+        ui->tableCart->setItem(row, 0, new QTableWidgetItem(item.name));
+        ui->tableCart->setItem(row, 1, new QTableWidgetItem(QString::number(item.quantity)));
+        ui->tableCart->setItem(row, 2, new QTableWidgetItem("$" + QString::number(item.unit_price, 'f', 2)));
+        ui->tableCart->setItem(row, 3, new QTableWidgetItem("$" + QString::number(subtotal, 'f', 2)));
     }
 
-    ui->labelCampusTotal->setText("Campus total: $" + QString::number(m_cart.total_cost_for_college(m_college_id), 'f', 2));
-    ui->labelGrandTotal->setText("Grand total: $" + QString::number(m_cart.grand_total(), 'f', 2));
+    ui->labelCampusTotal->setText(
+        "Campus Total: $" + QString::number(m_cart.total_cost_for_college(m_college_id), 'f', 2)
+        );
+
+    ui->labelGrandTotal->setText(
+        "Grand Total: $" + QString::number(m_cart.grand_total(), 'f', 2)
+        );
 }
 
 void CartPage::on_btnAdd_clicked()
 {
-    auto sel = ui->tableSouvenirs->selectionModel()->selectedRows();
-    if (sel.isEmpty()) { QMessageBox::warning(this,"Add","Select a souvenir."); return; }
+    if (!m_dm || m_college_id < 0)
+    {
+        QMessageBox::warning(this, "Error", "No campus is loaded.");
+        return;
+    }
 
-    int row = sel.first().row();
-    int souvenir_id = ui->tableSouvenirs->item(row,0)->text().toInt();
+    QModelIndexList selectedRows = ui->tableSouvenirs->selectionModel()->selectedRows();
+    if (selectedRows.isEmpty())
+    {
+        QMessageBox::warning(this, "Add To Cart", "Please select a souvenir first.");
+        return;
+    }
+
+    int row = selectedRows.first().row();
+    QTableWidgetItem* nameItem = ui->tableSouvenirs->item(row, 0);
+    int souvenir_id = nameItem->data(Qt::UserRole).toInt();
+
+    if (!nameItem)
+    {
+        QMessageBox::warning(this, "Add To Cart", "Invalid souvenir selection.");
+        return;
+    }
+
     int qty = ui->spinQty->value();
 
-    if (!m_cart.add_item(m_dm, souvenir_id, qty))
-        QMessageBox::warning(this,"Add","Could not add item.");
+    bool ok = m_cart.add_item(m_dm, souvenir_id, qty);
+
+    if (!ok)
+    {
+        QMessageBox::warning(this, "Add To Cart", "Could not add souvenir to cart.");
+        return;
+    }
 
     refreshCart();
 }
 
 void CartPage::on_btnRemove_clicked()
 {
-    auto sel = ui->tableCart->selectionModel()->selectedRows();
-    if (sel.isEmpty())
+    QModelIndexList selectedRows = ui->tableCart->selectionModel()->selectedRows();
+    if (selectedRows.isEmpty())
     {
-        QMessageBox::warning(this, "Remove", "Select a cart item.");
+        QMessageBox::warning(this, "Remove Selected", "Please select a cart item first.");
         return;
     }
 
-    int row = sel.first().row();
-    auto items = m_cart.items_for_college(m_college_id);
-    if (row < 0 || row >= items.size()) return;
+    int row = selectedRows.first().row();
+    QVector<ShoppingCart::Item> items = m_cart.items_for_college(m_college_id);
 
-    m_cart.remove(items[row].souvenir_id);
+    if (row < 0 || row >= items.size())
+    {
+        QMessageBox::warning(this, "Remove Selected", "Invalid cart selection.");
+        return;
+    }
+
+    bool ok = m_cart.remove(items[row].souvenir_id);
+
+    if (!ok)
+    {
+        QMessageBox::warning(this, "Remove Selected", "Could not remove item.");
+        return;
+    }
+
     refreshCart();
 }
 
 void CartPage::on_btnClose_clicked()
 {
-    close();
+    QVector<int> fullTrip = DataManager::instance()->get_current_trip();
+    int currentIndex = DataManager::instance()->get_current_trip_index();
+
+    if (currentIndex < 0 || currentIndex >= fullTrip.size())
+    {
+        accept();
+        return;
+    }
+
+    currentIndex++;
+    DataManager::instance()->set_current_trip_index(currentIndex);
+
+    if (currentIndex >= fullTrip.size())
+    {
+        QMessageBox::information(this, "Trip Complete", "You have finished visiting all colleges on this trip.");
+        accept();
+        return;
+    }
+
+    int nextCollegeId = fullTrip[currentIndex];
+    openForCollege(nextCollegeId);
 }

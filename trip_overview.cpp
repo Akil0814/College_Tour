@@ -1,11 +1,14 @@
 #include "trip_overview.h"
 #include "ui_trip_overview.h"
 #include "data_manager.h"
+#include "cart_page.h"
+
 #include <QMessageBox>
 
-trip_overview::trip_overview(QWidget *parent)
+trip_overview::trip_overview(ShoppingCart* cart, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::trip_overview)
+    , m_cart(cart)
 {
     ui->setupUi(this);
 
@@ -149,4 +152,30 @@ void trip_overview::resizeEvent(QResizeEvent *event)
     ui->label_2->setStyleSheet(dynamicStyle);
     ui->label_3->setStyleSheet(dynamicStyle);
     ui->label_4->setStyleSheet(dynamicStyle);
+}
+
+void trip_overview::on_visitCampusButton_clicked()
+{
+    if (!m_cart)
+    {
+        QMessageBox::warning(this, "Cart Error", "Shopping cart is not available.");
+        return;
+    }
+
+    QVector<int> fullTrip = DataManager::instance()->get_current_trip();
+    int currentIndex = DataManager::instance()->get_current_trip_index();
+
+    if (currentIndex < 0 || currentIndex >= fullTrip.size())
+    {
+        QMessageBox::information(this, "Trip Complete", "There are no more campuses to visit.");
+        return;
+    }
+
+    int currentCollegeId = fullTrip[currentIndex];
+
+    CartPage dlg(*m_cart, DataManager::instance(), this);
+    dlg.openForCollege(currentCollegeId);
+    dlg.exec();
+
+    loadCurrentLeg();
 }
