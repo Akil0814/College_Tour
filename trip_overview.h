@@ -2,10 +2,13 @@
 #define TRIP_OVERVIEW_H
 
 #include <QDialog>
-#include <qlabel.h>
 #include <QLabel>
 #include <QVector>
 #include "shopping_cart.h"
+
+// --- NEW INCLUDES ---
+#include "trip_summary.h"
+#include "distance_tracker.h"
 
 class ShoppingCart;
 
@@ -25,9 +28,10 @@ private slots:
     void on_nextButton_clicked();
     void on_visitCampusButton_clicked();
 
+    // --- ADDED THIS: Back Button Slot ---
+    void on_backButton_clicked();
 
 protected:
-    // --- ADDED THIS: Function to detect window resizing ---
     void resizeEvent(QResizeEvent *event) override;
 
 private:
@@ -36,7 +40,6 @@ private:
     QVector<QLabel*> nodes;
     QVector<QLabel*> arrows;
 
-    // Helper function to draw the 5 circles
     void loadCurrentLeg();
 
     ShoppingCart* m_cart = nullptr;

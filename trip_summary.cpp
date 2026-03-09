@@ -1,5 +1,6 @@
 #include "trip_summary.h"
 #include "ui_trip_summary.h"
+#include "home_page.h"
 
 TripSummary::TripSummary(QWidget *parent)
     : QWidget(parent)
@@ -102,7 +103,18 @@ void TripSummary::clearSummaryCache()
 
 void TripSummary::on_exitSummaryButton_clicked()
 {
-    // Promt exit of page - needs implementation
+    // Search through all running windows in the application
+    for (QWidget *widget : QApplication::topLevelWidgets()) {
+
+        // If the window is the HomePage, unhide it!
+        if (HomePage *home = qobject_cast<HomePage*>(widget)) {
+            home->show();
+            break;
+        }
+    }
+
+    // Close the summary window
+    this->close();
 }
 
 

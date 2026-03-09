@@ -2,7 +2,6 @@
 #include "ui_trip_overview.h"
 #include "data_manager.h"
 #include "cart_page.h"
-
 #include <QMessageBox>
 
 trip_overview::trip_overview(ShoppingCart* cart, QWidget *parent)
@@ -12,27 +11,27 @@ trip_overview::trip_overview(ShoppingCart* cart, QWidget *parent)
 {
     ui->setupUi(this);
 
-    // 1. Style the Header (trip_overview_2)
+    // Style the Header (trip_overview_2)
     ui->trip_overview_2->setStyleSheet(
         "font-size: 42px; "
         "font-weight: bold; "
-        "color: #B41E28; " // More red
+        "color: #B41E28; "
         "font-family: 'Segoe UI';"
         );
 
-    // --- NEW STYLE: Bigger and Redder ---
+    // Style the Circles
     QString circleStyle =
         "QLabel { "
-        "  background-color: #B41E28; " // Saddleback Red
+        "  background-color: #B41E28; "
         "  color: white; "
-        "  border-radius: 35px; "      // Half of 70px makes it a circle
+        "  border-radius: 35px; "
         "  min-width: 70px; "
         "  min-height: 70px; "
         "  max-width: 70px; "
         "  max-height: 70px; "
         "  font-weight: bold; "
-        "  font-size: 18px; "          // Larger font for initials
-        "  border: 3px solid white; "  // Makes the red pop more
+        "  font-size: 18px; "
+        "  border: 3px solid white; "
         "}";
 
     ui->circle1->setStyleSheet(circleStyle);
@@ -47,6 +46,7 @@ trip_overview::trip_overview(ShoppingCart* cart, QWidget *parent)
     ui->circle4->setAlignment(Qt::AlignCenter);
     ui->circle5->setAlignment(Qt::AlignCenter);
 
+    // Style the Arrows
     QString arrowStyle = "font-size: 40px; color: #B41E28; font-weight: bold;";
     ui->label->setStyleSheet(arrowStyle);
     ui->label_2->setStyleSheet(arrowStyle);
@@ -69,7 +69,6 @@ trip_overview::~trip_overview()
 static QString getInitials(QString name) {
     QString initials;
     for (const QString &word : name.split(" ")) {
-        // Grab the first letter if it's uppercase (e.g. "Arizona State University" -> "ASU")
         if (!word.isEmpty() && word[0].isUpper()) initials += word[0];
     }
     return initials;
@@ -77,105 +76,103 @@ static QString getInitials(QString name) {
 
 void trip_overview::loadCurrentLeg()
 {
-    // 1. Get the full route and current progress
     QVector<int> fullTrip = DataManager::instance()->get_current_trip();
     int startIndex = DataManager::instance()->get_current_trip_index();
 
-    // 2. Map UI elements into arrays for easy looping
     QList<QLabel*> circles = {ui->circle1, ui->circle2, ui->circle3, ui->circle4, ui->circle5};
     QList<QLabel*> arrows = {ui->label, ui->label_2, ui->label_3, ui->label_4};
 
-    // 3. Loop strictly through the optimized sequence
     for (int i = 0; i < 5; ++i) {
-        int pathIndex = startIndex + i; // The exact position in the optimized route
+        int pathIndex = startIndex + i;
 
         if (pathIndex < fullTrip.size()) {
             int collegeId = fullTrip[pathIndex];
-
-            // Fetch the exact name for this specific ID one at a time to preserve order
             QString name = DataManager::instance()->get_college_name(collegeId).value_or("");
 
             circles[i]->setText(getInitials(name));
             circles[i]->show();
 
-            // Show arrow if it's connecting to a visible node
             if (i > 0) arrows[i-1]->show();
         } else {
-            // Hide unused circles and arrows
             circles[i]->hide();
             if (i > 0) arrows[i-1]->hide();
         }
     }
 
-    // 4. Update button text
     if (startIndex + 5 >= fullTrip.size()) {
         ui->nextButton->setText("Finish Trip");
     } else {
         ui->nextButton->setText("Start Next Leg");
     }
 }
-
 void trip_overview::on_nextButton_clicked()
 {
     QVector<int> fullTrip = DataManager::instance()->get_current_trip();
     int currentIndex = DataManager::instance()->get_current_trip_index();
 
-    if (currentIndex + 5 >= fullTrip.size()) {
-        QMessageBox::information(this, "End of Trip", "You have finished your college tour!");
-        this->close();
-    } else {
-        // Advance by 5 for the next leg
+    if (currentIndex + 5 < fullTrip.size()) {
         DataManager::instance()->set_current_trip_index(currentIndex + 5);
         loadCurrentLeg();
+    } else {
+        QMessageBox::information(this, "End of Route", "You are viewing the end of the route. Click 'Visit Campuses' to begin traveling!");
     }
 }
 
-// --- ADD THIS: Dynamic Resizing Logic at the bottom ---
-void trip_overview::resizeEvent(QResizeEvent *event)
+// --- CHANGE 1: Back Navigation Logic ---
+void trip_overview::on_backButton_clicked()
 {
-    // 1. Call the default resize behavior first
-    QDialog::resizeEvent(event);
+    int currentIndex = DataManager::instance()->get_current_trip_index();
 
-    // 2. Calculate a new font size based on the window's width
-    // Dividing by 15 is a good starting ratio, but you can tweak this!
-    int dynamicFontSize = this->width() / 15;
-
-    // 3. Set min and max limits so the arrows don't disappear or get comically large
-    if (dynamicFontSize < 24) dynamicFontSize = 24;
-    if (dynamicFontSize > 80) dynamicFontSize = 80;
-
-    // 4. Create the new stylesheet with the calculated size
-    QString dynamicStyle = QString("font-size: %1px; color: #B41E28; font-weight: bold;").arg(dynamicFontSize);
-
-    // 5. Apply the new style to all arrows
-    ui->label->setStyleSheet(dynamicStyle);
-    ui->label_2->setStyleSheet(dynamicStyle);
-    ui->label_3->setStyleSheet(dynamicStyle);
-    ui->label_4->setStyleSheet(dynamicStyle);
+    if (currentIndex - 5 >= 0) {
+        DataManager::instance()->set_current_trip_index(currentIndex - 5);
+        loadCurrentLeg();
+    } else {
+        QMessageBox::information(this, "Start of Trip", "You are already viewing the beginning of the trip.");
+    }
 }
 
 void trip_overview::on_visitCampusButton_clicked()
 {
-    if (!m_cart)
-    {
-        QMessageBox::warning(this, "Cart Error", "Shopping cart is not available.");
-        return;
-    }
+    if (!m_cart) return;
 
     QVector<int> fullTrip = DataManager::instance()->get_current_trip();
     int currentIndex = DataManager::instance()->get_current_trip_index();
 
-    if (currentIndex < 0 || currentIndex >= fullTrip.size())
-    {
-        QMessageBox::information(this, "Trip Complete", "There are no more campuses to visit.");
-        return;
-    }
+    if (currentIndex < 0 || currentIndex >= fullTrip.size()) return;
 
     int currentCollegeId = fullTrip[currentIndex];
 
     CartPage dlg(*m_cart, DataManager::instance(), this);
     dlg.openForCollege(currentCollegeId);
+
+    // 1. Hide the map while shopping
+    this->hide();
+
+    // 2. Open the cart loop
     dlg.exec();
 
-    loadCurrentLeg();
+    // 3. When the cart loop finishes, check if the whole trip is done
+    int newIndex = DataManager::instance()->get_current_trip_index();
+    if (newIndex >= fullTrip.size()) {
+        this->close(); // Close the map permanently (Summary is now showing!)
+    } else {
+        this->show();  // Show the map again for the next leg
+        loadCurrentLeg();
+    }
+}
+
+void trip_overview::resizeEvent(QResizeEvent *event)
+{
+    QDialog::resizeEvent(event);
+    int dynamicFontSize = this->width() / 15;
+
+    if (dynamicFontSize < 24) dynamicFontSize = 24;
+    if (dynamicFontSize > 80) dynamicFontSize = 80;
+
+    QString dynamicStyle = QString("font-size: %1px; color: #B41E28; font-weight: bold;").arg(dynamicFontSize);
+
+    ui->label->setStyleSheet(dynamicStyle);
+    ui->label_2->setStyleSheet(dynamicStyle);
+    ui->label_3->setStyleSheet(dynamicStyle);
+    ui->label_4->setStyleSheet(dynamicStyle);
 }

@@ -17,9 +17,13 @@ bool DistanceTracker::location_changed(const QString& new_location){
         return true;
     }
 
-    const std::optional<double> miles =
+    std::optional<double> miles =
 
         m_data_manager->get_distance_between_college(m_current_location, new_location);
+
+    if (!miles.has_value()){
+        miles = m_data_manager->get_distance_between_college(new_location, m_current_location);
+    }
 
     if (!miles.has_value()){
 

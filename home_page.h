@@ -33,6 +33,7 @@ private slots:
     void on_student_button_clicked();
     void on_admin_button_clicked();
     void on_add_item_button_clicked();
+    void on_distances_button_clicked();
 
 private:
     Ui::HomePage *ui;
@@ -42,6 +43,7 @@ private:
     QLabel *subHeadingLabel;
     QPushButton *studentButton;
     QPushButton *adminButton;
+    QPushButton *distancesButton;
 
     ShoppingCart m_cart;
 

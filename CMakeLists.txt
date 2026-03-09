@@ -46,6 +46,8 @@ qt_add_executable(College_Tour
 
     distance_tracker.h distance_tracker.cpp
     trip_summary.h trip_summary.cpp trip_summary.ui
+    distances_page.h
+    distances_page.cpp
 )
 
 target_link_libraries(College_Tour PRIVATE

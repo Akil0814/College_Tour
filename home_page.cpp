@@ -5,6 +5,7 @@
 #include "planatrip.h"
 #include "adminpage.h"
 #include "login_window.h"
+#include "distances_page.h"
 
 #include "shopping_cart.h"
 #include "login_window.h"
@@ -49,6 +50,7 @@ HomePage::HomePage(QWidget *parent)
 
     studentButton = new QPushButton("STUDENT PORTAL");
     adminButton = new QPushButton("ADMIN LOGIN");
+    distancesButton = new QPushButton("VIEW CAMPUS DISTANCES");
 
 
 
@@ -61,6 +63,7 @@ HomePage::HomePage(QWidget *parent)
     sidebarLayout->addStretch(1);
     sidebarLayout->addWidget(studentButton);
     sidebarLayout->addWidget(adminButton);
+    sidebarLayout->addWidget(distancesButton);
 
     mainLayout->addWidget(sidebarFrame);
     mainLayout->addStretch(1);
@@ -78,6 +81,7 @@ HomePage::HomePage(QWidget *parent)
 
     connect(studentButton, &QPushButton::clicked, this, &HomePage::on_student_button_clicked);
     connect(adminButton, &QPushButton::clicked, this, &HomePage::on_admin_button_clicked);
+    connect(distancesButton, &QPushButton::clicked, this, &HomePage::on_distances_button_clicked);
 
     // m_cartTester = new CartTester(m_cart, DataManager::instance(), this);
 
@@ -150,3 +154,9 @@ void HomePage::on_add_item_button_clicked()
     // m_cartTester->add_item_prompt();
 }
 
+void HomePage::on_distances_button_clicked() {
+    DistancesPage *distPage = new DistancesPage(this);
+    distPage->setAttribute(Qt::WA_DeleteOnClose);
+    distPage->setWindowModality(Qt::ApplicationModal); // Blocks interactions with the background until closed
+    distPage->show();
+}

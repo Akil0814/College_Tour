@@ -1,6 +1,9 @@
 #include "cart_page.h"
+#include "distance_tracker.h"
 #include "ui_cart_page.h"
 #include "data_manager.h"
+#include "trip_summary.h"
+#include "distance_tracker.h"
 
 #include <QHeaderView>
 #include <QMessageBox>
@@ -88,9 +91,11 @@ void CartPage::refreshHeader()
     QVector<int> fullTrip = DataManager::instance()->get_current_trip();
     int currentIndex = DataManager::instance()->get_current_trip_index();
 
-    //middle colleges in trip will say next college, last college will tell to finish trip
-    if (currentIndex >= 0 && currentIndex == fullTrip.size() - 1)
+   // Dynamically change the button text based on where we are in the trip
+    if (currentIndex >= fullTrip.size() - 1)
         ui->btnClose->setText("Finish Trip");
+    else if ((currentIndex + 1) % 5 == 0)
+        ui->btnClose->setText("Next Leg Overview");
     else
         ui->btnClose->setText("Next College");
 }
@@ -220,22 +225,40 @@ void CartPage::on_btnClose_clicked()
     QVector<int> fullTrip = DataManager::instance()->get_current_trip();
     int currentIndex = DataManager::instance()->get_current_trip_index();
 
-    if (currentIndex < 0 || currentIndex >= fullTrip.size())
-    {
-        accept();
-        return;
-    }
-
+    // 1. Advance the index
     currentIndex++;
     DataManager::instance()->set_current_trip_index(currentIndex);
 
+    // 2. Are we at the very end of the trip?
     if (currentIndex >= fullTrip.size())
     {
-        QMessageBox::information(this, "Trip Complete", "You have finished visiting all colleges on this trip.");
-        accept();
+        // Compile the Distance Tracker
+        DistanceTracker dt(DataManager::instance());
+        for (int id : fullTrip) {
+            std::optional<QString> name = DataManager::instance()->get_college_name(id);
+            if (name.has_value()) {
+                dt.location_changed(name.value());
+            }
+        }
+
+        // Open the Summary Page directly from the last cart!
+        TripSummary *summaryPage = new TripSummary();
+        summaryPage->populateTable(&m_cart, &dt);
+        summaryPage->setAttribute(Qt::WA_DeleteOnClose);
+        summaryPage->show();
+
+        accept(); // Close the Cart Window
         return;
     }
 
+    // 3. Did we just finish a leg of 5?
+    if (currentIndex % 5 == 0)
+    {
+        accept(); // Close the cart to reveal the Trip Overview in the background!
+        return;
+    }
+
+    // 4. Otherwise, immediately load the next campus into the cart window
     int nextCollegeId = fullTrip[currentIndex];
     openForCollege(nextCollegeId);
 }
