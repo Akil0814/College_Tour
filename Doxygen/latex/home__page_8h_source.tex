@@ -1,0 +1,56 @@
+\doxysection{home\+\_\+page.\+h}
+\hypertarget{home__page_8h_source}{}\label{home__page_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ HOME\_PAGE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ HOME\_PAGE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <QWidget>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <QHBoxLayout>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <QVBoxLayout>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <QFrame>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <QLabel>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <QPushButton>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <QSpacerItem>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <QResizeEvent>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}shopping\_cart.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ QT\_BEGIN\_NAMESPACE}
+\DoxyCodeLine{00018\ \textcolor{keyword}{namespace\ }Ui\ \{\ \textcolor{keyword}{class\ }HomePage;\ \}}
+\DoxyCodeLine{00019\ QT\_END\_NAMESPACE}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }HomePage\ :\ \textcolor{keyword}{public}\ QWidget\ \{}
+\DoxyCodeLine{00022\ \ \ \ \ Q\_OBJECT}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00025\ \ \ \ \ HomePage(QWidget\ *parent\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00026\ \ \ \ \ \string~HomePage();\ \textcolor{comment}{//\ This\ is\ the\ destructor\ the\ linker\ is\ missing}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{void}\ resizeEvent(QResizeEvent\ *event)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{private}\ slots:}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{comment}{//\ These\ must\ match\ the\ names\ in\ your\ .cpp\ file\ exactly}}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_student\_button\_clicked();}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_admin\_button\_clicked();}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_add\_item\_button\_clicked();}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_distances\_button\_clicked();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00039\ \ \ \ \ Ui::HomePage\ *ui;}
+\DoxyCodeLine{00040\ \ \ \ \ QFrame\ *sidebarFrame;}
+\DoxyCodeLine{00041\ \ \ \ \ QLabel\ *heroImage;}
+\DoxyCodeLine{00042\ \ \ \ \ QLabel\ *titleLabel;}
+\DoxyCodeLine{00043\ \ \ \ \ QLabel\ *subHeadingLabel;}
+\DoxyCodeLine{00044\ \ \ \ \ QPushButton\ *studentButton;}
+\DoxyCodeLine{00045\ \ \ \ \ QPushButton\ *adminButton;}
+\DoxyCodeLine{00046\ \ \ \ \ QPushButton\ *distancesButton;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \doxymbox{\hyperlink{class_shopping_cart}{ShoppingCart}}\ m\_cart;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \};}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

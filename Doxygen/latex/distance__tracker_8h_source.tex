@@ -1,0 +1,28 @@
+\doxysection{distance\+\_\+tracker.\+h}
+\hypertarget{distance__tracker_8h_source}{}\label{distance__tracker_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ DISTANCE\_TRACKER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ DISTANCE\_TRACKER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <QString>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <optional>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{class\ }\doxymbox{\hyperlink{class_data_manager}{DataManager}};}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }DistanceTracker}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00012\ \ \ \ \ \textcolor{keyword}{explicit}\ DistanceTracker(\doxymbox{\hyperlink{class_data_manager}{DataManager}}*\ data\_manager);}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ \ \textcolor{keywordtype}{bool}\ location\_changed\ (\textcolor{keyword}{const}\ QString\&\ new\_location);}
+\DoxyCodeLine{00015\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_total\_distance\ ()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00016\ \ \ \ \ QString\ get\_current\_location\ ()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00017\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \doxymbox{\hyperlink{class_data_manager}{DataManager}}*\ m\_data\_manager;}
+\DoxyCodeLine{00019\ \ \ \ \ QString\ m\_current\_location;}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keywordtype}{double}\ m\_total\_distance;}
+\DoxyCodeLine{00021\ \};}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ DISTANCE\_TRACKER\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,49 @@
+\doxysection{planatrip.\+h}
+\hypertarget{planatrip_8h_source}{}\label{planatrip_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PLANATRIP\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PLANATRIP\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <QMainWindow>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <QLabel>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <QVector>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }\doxymbox{\hyperlink{class_shopping_cart}{ShoppingCart}};}
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }QListWidgetItem;}
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }QResizeEvent;}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{namespace\ }Ui\ \{}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }PlanATrip;}
+\DoxyCodeLine{00014\ \}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }PlanATrip\ :\ \textcolor{keyword}{public}\ QMainWindow}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ Q\_OBJECT}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{explicit}\ PlanATrip(\doxymbox{\hyperlink{class_shopping_cart}{ShoppingCart}}*\ cart,\ QWidget*\ parent\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00022\ \ \ \ \ \string~PlanATrip();}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{private}\ slots:}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_goButton\_clicked();}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_tripStopsDropDown\_activated(\textcolor{keywordtype}{int}\ index);}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_listWidget\_itemDoubleClicked(QListWidgetItem\ *item);}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_startingPointDropDown\_activated(\textcolor{keywordtype}{int}\ index);}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{void}\ on\_premadeTripsDropDown\_activated(\textcolor{keywordtype}{int}\ index);}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{void}\ populateColleges();}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ QLabel\ *bg;}
+\DoxyCodeLine{00035\ \ \ \ \ Ui::PlanATrip\ *ui;}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{int}\ startingCollegeId\ =\ -\/1;}
+\DoxyCodeLine{00037\ \ \ \ \ QVector<int>\ tripStops;}
+\DoxyCodeLine{00038\ \ \ \ \ \doxymbox{\hyperlink{class_shopping_cart}{ShoppingCart}}*\ m\_cart\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{void}\ resizeEvent(QResizeEvent\ *event)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00042\ \};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ PLANATRIP\_H}}
+
+\end{DoxyCode}
