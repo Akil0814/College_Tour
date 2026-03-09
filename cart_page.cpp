@@ -262,3 +262,12 @@ void CartPage::on_btnClose_clicked()
     int nextCollegeId = fullTrip[currentIndex];
     openForCollege(nextCollegeId);
 }
+
+void CartPage::clearCartAndRefresh()
+{
+    m_cart.clear();              // erase all stored items
+    ui->tableCart->setRowCount(0);
+
+    ui->labelCampusTotal->setText("Campus Total: $0.00");
+    ui->labelGrandTotal->setText("Grand Total: $0.00");
+}

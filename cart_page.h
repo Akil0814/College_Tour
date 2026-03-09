@@ -29,6 +29,7 @@ private:
     void refreshSouvenirs();
     void refreshCart();
     void refreshHeader();
+    void clearCartAndRefresh();
 
     Ui::CartPage *ui;
     ShoppingCart& m_cart;
