@@ -45,7 +45,7 @@ void PlanATrip::resizeEvent(QResizeEvent *event)
 void PlanATrip::populateColleges()
 {
     // 1. Get the list of all colleges from the DataManager
-    QVector<college> colleges = DataManager::instance()->get_all_colleges();
+    QVector<college> colleges = DataManager::instance()->get_all_colleges_have_distances();
 
     // 2. Clear existing items to avoid duplicates if called multiple times
     ui->startingPointDropDown->clear();
