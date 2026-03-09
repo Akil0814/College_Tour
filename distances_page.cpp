@@ -9,7 +9,7 @@ DistancesPage::DistancesPage(QWidget *parent) : QDialog(parent) {
     setStyleSheet(
         "QDialog { background-color: #f5f5f5; }"
         "QLabel { color: #B41E28; font-size: 28px; font-weight: bold; font-family: 'Segoe UI'; margin-bottom: 10px; }"
-        "QTableWidget { background-color: white; font-size: 16px; border: 2px solid #B41E28; gridline-color: #dddddd; }"
+        "QTableWidget { color: blue; background-color: white; font-size: 16px; border: 2px solid #B41E28; gridline-color: #dddddd; }"
         "QHeaderView::section { background-color: #B41E28; color: white; font-weight: bold; font-size: 16px; padding: 5px; }"
         "QPushButton { background-color: #B41E28; color: white; font-size: 16px; font-weight: bold; border-radius: 20px; padding: 10px; min-width: 150px; }"
         "QPushButton:hover { background-color: #8B151E; }"

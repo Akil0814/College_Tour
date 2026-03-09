@@ -18,6 +18,7 @@ private slots:
 
 private:
     QTableWidget *tableWidget;
+
 };
 
 #endif // DISTANCES_PAGE_H
