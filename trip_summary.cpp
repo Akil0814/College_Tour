@@ -45,10 +45,6 @@ void TripSummary::populateTable(ShoppingCart *cart, DistanceTracker *dt)
         {
             qDebug() << "|Summary| School name not retrieved from id";
         }
-        if (locationNumPurchased != locationItems.size())
-        {
-            qDebug() << "|Summary| Number purchased and number of items do not match";
-        }
 
         // Create new row at end of table
         int row = ui->cartTable->rowCount();

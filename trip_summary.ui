@@ -43,14 +43,6 @@ QLabel#titleLabel
 	border-radius: 10px;
 }
 
-QLabel#itemsPurchasedLabel,
-QLabel#locationsVisitedLabel,
-QLabel#totalDistanceTravelledLabel,
-QLabel#totalSpentLabel
-{
-
-}
-
 QTableWidget 
 {
 	background-color: white;
