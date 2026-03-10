@@ -6,107 +6,274 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>752</width>
-    <height>528</height>
+    <width>726</width>
+    <height>588</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <property name="styleSheet">
+   <string notr="true">/*
+Brand Color Red #BE2832 
+Brand Color Darkened #a61f28
+*/
+
+QWidget#TripSummary 
+{
+	background-color: #F2F2F2;
+}
+
+QLabel 
+{
+	font-family: &quot;Segoe UI&quot;, sans-serif;
+	color: black;
+	font-weight: bold;
+	qproperty-alignment: 'AlignCenter';
+	font-size: 18px;
+}
+
+QLabel#titleLabel 
+{
+	font-size: 28px;
+	font-weight: bold;
+	padding-bottom: 6px;
+	border-bottom: 3px solid #BE2832;
+	border-top: 3px solid #BE2832;
+	border-radius: 10px;
+}
+
+QLabel#itemsPurchasedLabel,
+QLabel#locationsVisitedLabel,
+QLabel#totalDistanceTravelledLabel,
+QLabel#totalSpentLabel
+{
+
+}
+
+QTableWidget 
+{
+	background-color: white;
+	alternate-background-color: #f8f8f8;
+	border: 1px solid #dddddd;
+ 	gridline-color: black;
+	font-size: 16px;
+}
+
+QHeaderView::section
+{
+	background-color: #BE2832;
+	color: white;
+	font-weight: bold;
+	padding: 6px;
+	border: none;
+	font-size: 18px;
+}
+
+QPushButton#exitSummaryButton
+{
+	background-color: #BE2832;
+	color: white;
+	border-radius: 20px;
+	font-size: 16px;
+	font-weight: bold;
+	padding: 10px 30px;
+}
+
+QPushButton#exitSummaryButton:hover
+{
+	background-color: #a61f28;
+}
+
+QFrame#titleFrame,
+QFrame#statsFrame,
+QFrame#exitSummaryFrame
+{
+    background-color: white;
+    border-radius: 10px;
+    border: 1px solid #e4e6eb;
+    padding: 12px;
+}
+</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_6">
    <item>
-    <layout class="QHBoxLayout" name="titleLayout">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <property name="leftMargin">
+      <number>25</number>
+     </property>
+     <property name="topMargin">
+      <number>20</number>
+     </property>
+     <property name="rightMargin">
+      <number>25</number>
+     </property>
+     <property name="bottomMargin">
+      <number>20</number>
+     </property>
      <item>
-      <widget class="QLabel" name="titleLabel">
-       <property name="font">
-        <font>
-         <pointsize>20</pointsize>
-        </font>
+      <widget class="QFrame" name="titleFrame">
+       <property name="frameShape">
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
-       <property name="text">
-        <string>Trip Summary</string>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="tableLayout">
-     <item>
-      <widget class="QTableWidget" name="cartTable">
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
-       </property>
-       <property name="editTriggers">
-        <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
-       </property>
-       <property name="dragDropOverwriteMode">
-        <bool>false</bool>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-       <property name="textElideMode">
-        <enum>Qt::TextElideMode::ElideMiddle</enum>
-       </property>
-       <property name="gridStyle">
-        <enum>Qt::PenStyle::SolidLine</enum>
-       </property>
-       <property name="sortingEnabled">
-        <bool>false</bool>
-       </property>
-       <property name="columnCount">
-        <number>0</number>
-       </property>
-       <property name="supportedDragActions">
-        <set>Qt::DropAction::CopyAction|Qt::DropAction::MoveAction</set>
-       </property>
-       <attribute name="horizontalHeaderStretchLastSection">
-        <bool>true</bool>
-       </attribute>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="statsLayout">
-     <item>
-      <widget class="QLabel" name="locationsVisitedLabel">
-       <property name="text">
-        <string>Number of Locations Visited:</string>
-       </property>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="titleLabel">
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>-1</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Trip Summary</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="itemsPurchasedLabel">
-       <property name="text">
-        <string>Number of Items Purchased:</string>
+      <widget class="QFrame" name="tableFrame">
+       <property name="frameShape">
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QTableWidget" name="cartTable">
+          <property name="styleSheet">
+           <string notr="true">QTableWidget::Item
+{
+	color: black;
+}</string>
+          </property>
+          <property name="sizeAdjustPolicy">
+           <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+          </property>
+          <property name="dragDropOverwriteMode">
+           <bool>false</bool>
+          </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+          </property>
+          <property name="textElideMode">
+           <enum>Qt::TextElideMode::ElideMiddle</enum>
+          </property>
+          <property name="showGrid">
+           <bool>false</bool>
+          </property>
+          <property name="gridStyle">
+           <enum>Qt::PenStyle::SolidLine</enum>
+          </property>
+          <property name="sortingEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="columnCount">
+           <number>0</number>
+          </property>
+          <property name="supportedDragActions">
+           <set>Qt::DropAction::CopyAction|Qt::DropAction::MoveAction</set>
+          </property>
+          <attribute name="horizontalHeaderStretchLastSection">
+           <bool>true</bool>
+          </attribute>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="totalSpentLabel">
-       <property name="text">
-        <string>Total Spent:</string>
+      <widget class="QFrame" name="statsFrame">
+       <property name="frameShape">
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <layout class="QGridLayout" name="statsGrid">
+          <item row="1" column="0">
+           <widget class="QLabel" name="itemsPurchasedLabel">
+            <property name="text">
+             <string>Items Purchased:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="locationsVisitedLabel">
+            <property name="text">
+             <string>Locations Visited:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="totalSpentLabel">
+            <property name="text">
+             <string>Total Spent:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="totalDistanceTravelledLabel">
+            <property name="text">
+             <string>Distance Travelled:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="totalDistanceTravelledLabel">
-       <property name="text">
-        <string>Total Distance Travelled</string>
+      <widget class="QFrame" name="exitSummaryFrame">
+       <property name="frameShape">
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QPushButton" name="exitSummaryButton">
-       <property name="text">
-        <string>Exit Summary</string>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QPushButton" name="exitSummaryButton">
+          <property name="text">
+           <string>Exit Summary</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>

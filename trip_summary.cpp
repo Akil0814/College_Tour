@@ -17,6 +17,7 @@ TripSummary::TripSummary(CartPage *cart_page, QWidget *parent)
 
     ui->cartTable->setColumnCount(numTableHeaders);
     ui->cartTable->setHorizontalHeaderLabels(tableHeaders);
+    ui->cartTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 TripSummary::~TripSummary()
