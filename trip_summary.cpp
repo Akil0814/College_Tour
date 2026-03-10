@@ -1,12 +1,14 @@
 #include "trip_summary.h"
 #include "ui_trip_summary.h"
-#include "home_page.h"
 
-TripSummary::TripSummary(QWidget *parent)
+TripSummary::TripSummary(CartPage *cart_page, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TripSummary)
 {
     ui->setupUi(this);
+
+    // Save pointer to cart page for clear / refresh cart
+    this->cart_page = cart_page;
 
     // Init table headers
     QStringList tableHeaders;
@@ -24,9 +26,6 @@ TripSummary::~TripSummary()
 
 void TripSummary::populateTable(ShoppingCart *cart, DistanceTracker *dt)
 {
-    // Clear saved summary data
-    clearSummaryCache();
-
     // Get locations visited
     QVector<int> trip_ids = DataManager::instance()->get_current_trip();
 
@@ -58,10 +57,6 @@ void TripSummary::populateTable(ShoppingCart *cart, DistanceTracker *dt)
         ui->cartTable->setItem(row, 0, new QTableWidgetItem(location.value()));
         ui->cartTable->setItem(row, 1, new QTableWidgetItem(QString::number(locationNumPurchased)));
         ui->cartTable->setItem(row, 2, new QTableWidgetItem(QString::number(locationCost, 'f', 2)));
-
-        // Add row to local cache
-        SummaryLine line = {location.value(), locationNumPurchased, locationCost};
-        summaryData.tableData.push_back(line);
     }
 
     // Resize table
@@ -75,38 +70,31 @@ void TripSummary::populateStats(QVector<int>& locations, ShoppingCart *cart, Dis
 {
     // Retrieve, num locations, num purchased, total spent, total distance
     int numLocations = locations.size();
-    int numPurchased = cart->all_items().size();
     double totalSpent = cart->grand_total();
     int totalDistance = dt->get_total_distance();
+    int numPurchased = 0;
+
+    for (ShoppingCart::Item i : cart->all_items())
+    {
+        numPurchased += i.quantity;
+    }
 
     // Update Labels
     ui->locationsVisitedLabel->setText("Number of Locations Visited: " + QString::number(numLocations));
     ui->itemsPurchasedLabel->setText("Number of Items Purchased: " + QString::number(numPurchased));
     ui->totalSpentLabel->setText("Total Spent: " + QString::number(totalSpent, 'f', 2));
     ui->totalDistanceTravelledLabel->setText("Total Distance Travelled: " + QString::number(totalDistance));
-
-    // Store stats in local cache
-    summaryData.totalLocations = numLocations;
-    summaryData.totalNumPurchased = numPurchased;
-    summaryData.totalSpent = totalSpent;
-    summaryData.totalDistance = totalDistance;
-}
-
-void TripSummary::clearSummaryCache()
-{
-    summaryData.tableData.clear();
-    summaryData.totalLocations = 0;
-    summaryData.totalNumPurchased = 0;
-    summaryData.totalSpent = 0;
-    summaryData.totalDistance = 0;
 }
 
 void TripSummary::on_exitSummaryButton_clicked()
 {
+    // Clear cart - function crashes program
+    // cart_page->clearCartAndRefresh();
+
     // Search through all running windows in the application
     for (QWidget *widget : QApplication::topLevelWidgets()) {
 
-        // If the window is the HomePage, unhide it!
+        // If the window is the HomePage, unhide it
         if (HomePage *home = qobject_cast<HomePage*>(widget)) {
             home->show();
             break;
@@ -116,10 +104,3 @@ void TripSummary::on_exitSummaryButton_clicked()
     // Close the summary window
     this->close();
 }
-
-
-void TripSummary::on_saveSummaryButton_clicked()
-{
-    // Prompt saving of data
-}
-
