@@ -19,6 +19,7 @@ public:
     ~CartPage();
 
     void openForCollege(int college_id);
+    void clearCartAndRefresh();
 
 private slots:
     void on_btnAdd_clicked();
@@ -29,7 +30,6 @@ private:
     void refreshSouvenirs();
     void refreshCart();
     void refreshHeader();
-    void clearCartAndRefresh();
 
     Ui::CartPage *ui;
     ShoppingCart& m_cart;
