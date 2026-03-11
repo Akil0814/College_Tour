@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include <QVector>
 #include <QGraphicsOpacityEffect>
+#include <QInputDialog>
 
 QVector<int> route_optimize(int start_id, QVector<int> destinations);
 
@@ -190,66 +191,100 @@ void PlanATrip::on_listWidget_itemDoubleClicked(QListWidgetItem *item) {
 void PlanATrip::on_premadeTripsDropDown_activated(int index) {
     if (index <= 0) return; // Ignore the placeholder
 
-    // 1. Clear any existing selections
-    tripStops.clear();
-    ui->listWidget->clear();
-
     QString startCollege;
     QStringList stops;
 
-    // 2. Define the exact lists using the CSV strings
     if (index == 1) {
+        // --- Pre-made Trip 1 ---
         startCollege = "Saddleback College";
-        stops << "Arizona State University"
-              << "Massachusetts Institute of Technology (MIT)"
-              << "Northwestern"
-              << "Ohio State University"
-              << "University of  Michigan"
-              << "University of California, Irvine (UCI)"
-              << "University of California, Los Angeles (UCLA)"
-              << "University of Oregon"
-              << "University of the Pacific"
-              << "University of Wisconsin";
+        stops << "Arizona State University" << "Massachusetts Institute of Technology (MIT)"
+              << "Northwestern" << "Ohio State University" << "University of  Michigan"
+              << "University of California, Irvine (UCI)" << "University of California, Los Angeles (UCLA)"
+              << "University of Oregon" << "University of the Pacific" << "University of Wisconsin";
 
     } else if (index == 2) {
+        // --- Pre-made Trip 2 ---
         startCollege = "University of California, Irvine (UCI)";
-        stops << "Massachusetts Institute of Technology (MIT)"
-              << "Northwestern"
-              << "Ohio State University"
-              << "University of  Michigan"
-              << "University of California, Los Angeles (UCLA)"
-              << "University of Oregon"
-              << "University of the Pacific"
-              << "University of Wisconsin"
-              << "Arizona State University"
-              << "Saddleback College"
-              << "California State University, Fullerton"
-              << "University of Texas";
+        stops << "Massachusetts Institute of Technology (MIT)" << "Northwestern"
+              << "Ohio State University" << "University of  Michigan"
+              << "University of California, Los Angeles (UCLA)" << "University of Oregon"
+              << "University of the Pacific" << "University of Wisconsin"
+              << "Arizona State University" << "Saddleback College"
+              << "California State University, Fullerton" << "University of Texas";
+
+    } else if (index == 3) {
+        // --- NEW: ASU Custom Trip (Dynamic) ---
+        bool ok;
+        int n = QInputDialog::getInt(this, "ASU Custom Trip",
+                                     "Enter total number of colleges to visit (1-11):",
+                                     11, 1, 11, 1, &ok);
+
+        // If the user hit Cancel, silently reset the dropdown and abort
+        if (!ok) {
+            ui->premadeTripsDropDown->setCurrentIndex(0);
+            return;
+        }
+
+        startCollege = "Arizona State University";
+
+        QStringList originalColleges = {
+            "Massachusetts Institute of Technology (MIT)", "Northwestern", "Ohio State University",
+            "Saddleback College", "University of  Michigan", "University of California, Irvine (UCI)",
+            "University of California, Los Angeles (UCLA)", "University of Oregon",
+            "University of the Pacific", "University of Wisconsin"
+        };
+
+        int asuId = DataManager::instance()->get_college_id(startCollege).value_or(-1);
+        if (asuId == -1) return;
+
+        // Fetch IDs for the algorithm
+        QVector<int> destinations;
+        for (const QString& name : originalColleges) {
+            auto idOpt = DataManager::instance()->get_college_id(name);
+            if (idOpt.has_value()) destinations.append(idOpt.value());
+        }
+
+        // Run the Greedy Algorithm
+        extern QVector<int> route_optimize(int start_id, QVector<int> destinations);
+        QVector<int> full_optimized_trip = route_optimize(asuId, destinations);
+
+        // Truncate the list to the user's number.
+        // Note: We start loop at i=1 because i=0 is ASU (which goes in the Start Dropdown!)
+        for (int i = 1; i < n && i < full_optimized_trip.size(); ++i) {
+            int collegeId = full_optimized_trip[i];
+            QString collegeName = DataManager::instance()->get_college_name(collegeId).value_or("");
+            if (!collegeName.isEmpty()) {
+                stops << collegeName; // Add dynamically ordered colleges to the stops list
+            }
+        }
     }
 
-    // 3. Set the Starting College Dropdown
+    // ==========================================
+    // UI POPULATION LOGIC (Runs for all 3 trips)
+    // ==========================================
+
+    // 1. Clear existing selections
+    tripStops.clear();
+    ui->listWidget->clear();
+
+    // 2. Set the Starting College Dropdown
     int startIndex = ui->startingPointDropDown->findText(startCollege, Qt::MatchExactly);
     if (startIndex != -1) {
         ui->startingPointDropDown->setCurrentIndex(startIndex);
-        // Set the backend variable since we skipped the manual user click
+
         auto startIdOpt = DataManager::instance()->get_college_id(startCollege);
         if (startIdOpt.has_value()) {
             startingCollegeId = startIdOpt.value();
         }
-    } else {
-        qDebug() << "Warning: Could not find start college in dropdown:" << startCollege;
     }
 
-    // 4. Add the destinations to the list widget and backend vector
+    // 3. Add the destinations to the list widget and backend vector
     for (const QString& stopName : stops) {
         auto idOpt = DataManager::instance()->get_college_id(stopName);
 
         if (idOpt.has_value()) {
             tripStops.append(idOpt.value());
             ui->listWidget->addItem(stopName);
-        } else {
-            // If there's a typo, it prints here!
-            qDebug() << "DB Mismatch Warning: Could not find ID for:" << stopName;
         }
     }
 }

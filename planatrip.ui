@@ -122,6 +122,11 @@ background-color: rgb(255, 255, 255);</string>
              <string>Pre-made Trip 2 (Start: UCI)</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>ASU Custom Trip (1-11 Colleges)</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item>
