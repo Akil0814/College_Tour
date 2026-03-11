@@ -23,7 +23,7 @@ adminpage::~adminpage()
 void adminpage::populateColleges()
 {
     // Get the list of all colleges from the DataManager
-    QVector<college> colleges = DataManager::instance()->get_all_colleges();
+    QVector<college> colleges = DataManager::instance()->get_all_colleges_have_distances();
 
     // Clear existing items to avoid duplicates if called multiple times
     ui->schoolSelectDD->clear();
@@ -241,6 +241,8 @@ void adminpage::on_resetButton_clicked()
     // Reset database
     bool reset = DataManager::instance()->reset_database();
     qDebug() << "Reset " << reset;
+
+    populateColleges();
 }
 
 // Remove currently selected university
