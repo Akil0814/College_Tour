@@ -231,6 +231,9 @@ void adminpage::on_editInputFileButton_clicked()
     // Update database with new file
     QFileInfo info(path);
     DataManager::instance()->add_campus_from_file(path, info.fileName());
+
+    // repopulate after file add
+    populateColleges();
 }
 
 
