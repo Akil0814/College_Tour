@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QTableWidgetItem>
 #include <optional>
+#include <QIntValidator>
 
 CartPage::CartPage(ShoppingCart& cart, DataManager* dm, QWidget* parent)
     : QDialog(parent),
@@ -51,8 +52,12 @@ CartPage::CartPage(ShoppingCart& cart, DataManager* dm, QWidget* parent)
     ui->tableCart->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableCart->verticalHeader()->setVisible(false);
 
-    ui->spinQty->setMinimum(1);
-    ui->spinQty->setValue(1);
+    //for validating input
+    QIntValidator *qtyValidator = new QIntValidator(1, 999, this);
+    ui->qtyInput->setValidator(qtyValidator);
+
+    ui->qtyInput->setText("1");
+    ui->qtyInput->setMaxLength(3);   // optional: prevents huge values
 
     ui->labelCollege->setText("Campus Page");
     ui->labelCampusTotal->setText("Campus Total: $0.00");
@@ -178,7 +183,24 @@ void CartPage::on_btnAdd_clicked()
         return;
     }
 
-    int qty = ui->spinQty->value();
+    //adding the label text instead of spinbox
+    QString qtyText = ui->qtyInput->text().trimmed();
+
+    if (qtyText.isEmpty())
+    {
+        QMessageBox::warning(this, "Add To Cart", "Please enter a quantity.");
+        return;
+    }
+
+    bool converted = false;
+    int qty = qtyText.toInt(&converted);
+
+    if (!converted || qty <= 0 || qty > 999)
+    {
+        QMessageBox::warning(this, "Add To Cart", "Please enter a valid quantity from 1 to 999.");
+        ui->qtyInput->setText("1");
+        return;
+    }
 
     bool ok = m_cart.add_item(m_dm, souvenir_id, qty);
 
@@ -189,6 +211,8 @@ void CartPage::on_btnAdd_clicked()
     }
 
     refreshCart();
+
+    ui->qtyInput->setText("1");
 }
 
 void CartPage::on_btnRemove_clicked()
