@@ -297,3 +297,19 @@ void CartPage::on_btnClose_clicked()
     int nextCollegeId = fullTrip[currentIndex];
     openForCollege(nextCollegeId);
 }
+
+void CartPage::resizeEvent(QResizeEvent *event)
+{
+    QDialog::resizeEvent(event);
+
+    if (!ui->contentWidget)
+        return;
+
+    int x = (width() - ui->contentWidget->width()) / 2;
+    int y = (height() - ui->contentWidget->height()) / 2;
+
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+
+    ui->contentWidget->move(x, y);
+}

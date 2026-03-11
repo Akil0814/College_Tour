@@ -24,6 +24,7 @@ private slots:
     void on_btnAdd_clicked();
     void on_btnRemove_clicked();
     void on_btnClose_clicked();
+     void resizeEvent(QResizeEvent *event) override;
 
 private:
     void refreshSouvenirs();
