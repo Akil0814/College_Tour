@@ -3,7 +3,7 @@
 
 #include <optional>
 
-    // ---------------- add items ----------------
+//adding items with the whole souvenir struct
 
     bool ShoppingCart::add_item(const souvenir& s, int qty)
 {
@@ -25,6 +25,8 @@
     return true;
 }
 
+//adding based on only souvenir ID (calls souvenir struct add function for full clean implementation)
+
 bool ShoppingCart::add_item(DataManager* dm, int souvenir_id, int qty)
 {
     if (!dm || !qty_ok(qty) || souvenir_id < 0)
@@ -37,6 +39,7 @@ bool ShoppingCart::add_item(DataManager* dm, int souvenir_id, int qty)
     return add_item(*s, qty);
 }
 
+//adding based on college id and souvenir name (calls souvenir id add function)
 bool ShoppingCart::add_item(DataManager* dm, int college_id, const QString& souvenir_name, int qty)
 {
     if (!dm || !qty_ok(qty) || college_id < 0)
@@ -49,8 +52,7 @@ bool ShoppingCart::add_item(DataManager* dm, int college_id, const QString& souv
     return add_item(dm, *sid, qty);
 }
 
-// ---------------- modify/remove ----------------
-
+// modifying the set quantity of an item
 bool ShoppingCart::set_quantity(int souvenir_id, int qty)
 {
     if (souvenir_id < 0)
@@ -79,18 +81,19 @@ bool ShoppingCart::set_quantity(int souvenir_id, int qty)
     return false;
 }
 
+//removing items from the stored cart
 bool ShoppingCart::remove(int souvenir_id)
 {
     return set_quantity(souvenir_id, 0);
 }
 
+//clearing the whole cart (for use after trip summary)
 void ShoppingCart::clear()
 {
     m_items.clear();
 }
 
-// ---------------- queries ----------------
-
+// simple value calls/returns
 bool ShoppingCart::contains(int souvenir_id) const
 {
     for (auto college_it = m_items.constBegin(); college_it != m_items.constEnd(); ++college_it)
@@ -113,6 +116,7 @@ int ShoppingCart::quantity(int souvenir_id) const
     return 0;
 }
 
+//all items for colelge
 QVector<ShoppingCart::Item> ShoppingCart::items_for_college(int college_id) const
 {
     QVector<Item> out;
@@ -128,6 +132,7 @@ QVector<ShoppingCart::Item> ShoppingCart::items_for_college(int college_id) cons
     return out;
 }
 
+//all items in cart
 QVector<ShoppingCart::Item> ShoppingCart::all_items() const
 {
     QVector<Item> out;

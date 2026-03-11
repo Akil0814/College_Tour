@@ -10,8 +10,6 @@
 #include <QTableWidgetItem>
 #include <optional>
 #include <QIntValidator>
-#include <QScreen>
-#include <QGuiApplication>
 
 CartPage::CartPage(ShoppingCart& cart, DataManager* dm, QWidget* parent)
     : QDialog(parent),
@@ -75,6 +73,7 @@ CartPage::~CartPage()
     delete ui;
 }
 
+//resetting for every college
 void CartPage::openForCollege(int college_id)
 {
     m_college_id = college_id;
@@ -84,6 +83,7 @@ void CartPage::openForCollege(int college_id)
     refreshCart();
 }
 
+//refreshing the campus header at top
 void CartPage::refreshHeader()
 {
     if (!m_dm || m_college_id < 0)
@@ -111,6 +111,7 @@ void CartPage::refreshHeader()
         ui->btnClose->setText("Next College");
 }
 
+//refreshing the souvenir options
 void CartPage::refreshSouvenirs()
 {
     ui->tableSouvenirs->setRowCount(0);
@@ -133,6 +134,7 @@ void CartPage::refreshSouvenirs()
     }
 }
 
+//refreshing cart at every college
 void CartPage::refreshCart()
 {
     ui->tableCart->setRowCount(0);
@@ -167,6 +169,7 @@ void CartPage::refreshCart()
         );
 }
 
+//to add to cart
 void CartPage::on_btnAdd_clicked()
 {
     if (!m_dm || m_college_id < 0)
@@ -224,6 +227,7 @@ void CartPage::on_btnAdd_clicked()
     ui->qtyInput->setText("1");
 }
 
+//to remove from cart
 void CartPage::on_btnRemove_clicked()
 {
 
@@ -255,6 +259,7 @@ void CartPage::on_btnRemove_clicked()
     ui->qtyRemoveInput->setText("1");
 }
 
+//to move onto the next college
 void CartPage::on_btnClose_clicked()
 {
     QVector<int> fullTrip = DataManager::instance()->get_current_trip();
@@ -298,6 +303,7 @@ void CartPage::on_btnClose_clicked()
     openForCollege(nextCollegeId);
 }
 
+//resizing the page
 void CartPage::resizeEvent(QResizeEvent *event)
 {
     QDialog::resizeEvent(event);

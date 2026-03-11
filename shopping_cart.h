@@ -31,7 +31,7 @@ public:
     bool remove(int souvenir_id);
     void clear();
 
-    // queries
+    // allowing quick access for these variables
     bool contains(int souvenir_id) const;
     int quantity(int souvenir_id) const;
 
@@ -43,6 +43,7 @@ public:
     double grand_total() const;
 
 private:
+    //hash table, using an outer and inner map
     QHash<int, QHash<int, Item>> m_items;
 
     static bool qty_ok(int qty) { return qty > 0; }
