@@ -242,7 +242,7 @@ void CartPage::on_btnClose_clicked()
         }
 
         // Open the Summary Page directly from the last cart!
-        TripSummary *summaryPage = new TripSummary(this);
+        TripSummary *summaryPage = new TripSummary(nullptr);
         summaryPage->populateTable(&m_cart, &dt);
         summaryPage->setAttribute(Qt::WA_DeleteOnClose);
         summaryPage->show();

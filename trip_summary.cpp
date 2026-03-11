@@ -1,14 +1,13 @@
 #include "trip_summary.h"
 #include "ui_trip_summary.h"
 
-TripSummary::TripSummary(CartPage *cart_page, QWidget *parent)
+TripSummary::TripSummary(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TripSummary)
 {
     ui->setupUi(this);
 
     // Save pointer to cart page for clear / refresh cart
-    this->cart_page = cart_page;
 
     // Init table headers
     QStringList tableHeaders;
@@ -27,6 +26,9 @@ TripSummary::~TripSummary()
 
 void TripSummary::populateTable(ShoppingCart *cart, DistanceTracker *dt)
 {
+    //populating the cart
+    m_cart = cart;
+
     // Get locations visited
     QVector<int> trip_ids = DataManager::instance()->get_current_trip();
 
@@ -85,8 +87,6 @@ void TripSummary::populateStats(QVector<int>& locations, ShoppingCart *cart, Dis
 
 void TripSummary::on_exitSummaryButton_clicked()
 {
-    // Clear cart - function crashes program
-    // cart_page->clearCartAndRefresh();
 
     // Search through all running windows in the application
     for (QWidget *widget : QApplication::topLevelWidgets()) {
@@ -98,6 +98,10 @@ void TripSummary::on_exitSummaryButton_clicked()
         }
     }
 
+
     // Close the summary window
     this->close();
+
+    if (m_cart)
+        m_cart->clear();
 }

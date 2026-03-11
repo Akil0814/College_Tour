@@ -17,7 +17,7 @@ class TripSummary : public QWidget
     Q_OBJECT
 
 public:
-    explicit TripSummary(CartPage *cart_page, QWidget *parent = nullptr);
+    explicit TripSummary(QWidget *parent = nullptr);
     ~TripSummary();
 
     // Must be called before showing window
@@ -28,7 +28,7 @@ private slots:
 
 private:
     Ui::TripSummary *ui;
-    CartPage *cart_page;
+    ShoppingCart* m_cart = nullptr;
 
     // Called in populateTable, updates stats section with totals
     void populateStats(QVector<int>& locations, ShoppingCart *cart, DistanceTracker *dt);
