@@ -10,6 +10,12 @@
     <height>625</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
@@ -130,7 +136,7 @@
     padding: 0px 8px;     /* NO vertical padding */
     margin: 0px;
     min-height: 22px;     /* control height */
-    max-height: 22px;
+    max-height: 22px; color: white;
 }</string>
    </property>
    <property name="text">
@@ -223,7 +229,7 @@
     padding: 0px 8px;     /* NO vertical padding */
     margin: 0px;
     min-height: 22px;     /* control height */
-    max-height: 22px;
+    max-height: 22px;color: white;
 }</string>
    </property>
    <property name="text">
@@ -285,7 +291,7 @@
     padding: 0px 8px;     /* NO vertical padding */
     margin: 0px;
     min-height: 22px;     /* control height */
-    max-height: 22px;
+    max-height: 22px; color : white;
 }</string>
    </property>
    <property name="text">
@@ -349,9 +355,9 @@
   <widget class="QLineEdit" name="qtyInput">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>60</x>
      <y>400</y>
-     <width>101</width>
+     <width>51</width>
      <height>21</height>
     </rect>
    </property>
@@ -363,6 +369,25 @@
    </property>
    <property name="placeholderText">
     <string>Enter Quantity</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="qtyRemoveInput">
+   <property name="geometry">
+    <rect>
+     <x>470</x>
+     <y>400</y>
+     <width>51</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>1</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignCenter</set>
+   </property>
+   <property name="placeholderText">
+    <string>Remove Quantity</string>
    </property>
   </widget>
  </widget>

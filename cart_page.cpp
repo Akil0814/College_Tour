@@ -10,6 +10,8 @@
 #include <QTableWidgetItem>
 #include <optional>
 #include <QIntValidator>
+#include <QScreen>
+#include <QGuiApplication>
 
 CartPage::CartPage(ShoppingCart& cart, DataManager* dm, QWidget* parent)
     : QDialog(parent),
@@ -20,7 +22,7 @@ CartPage::CartPage(ShoppingCart& cart, DataManager* dm, QWidget* parent)
     ui->setupUi(this);
 
     //setting font of output in tables
-    QFont tableFont("Segoe UI", 17);   // change 12 to whatever size you want
+    QFont tableFont("Segoe UI", 17);
     ui->tableSouvenirs->setFont(tableFont);
     ui->tableCart->setFont(tableFont);
 
@@ -52,7 +54,11 @@ CartPage::CartPage(ShoppingCart& cart, DataManager* dm, QWidget* parent)
     ui->tableCart->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableCart->verticalHeader()->setVisible(false);
 
-    //for validating input
+    //for validating input into removal entry
+    QIntValidator *removeValidator = new QIntValidator(1, 999, this);
+    ui->qtyRemoveInput->setValidator(removeValidator);
+
+    //for validating input into addding entry
     QIntValidator *qtyValidator = new QIntValidator(1, 999, this);
     ui->qtyInput->setValidator(qtyValidator);
 
@@ -143,7 +149,10 @@ void CartPage::refreshCart()
 
         ui->tableCart->insertRow(row);
 
-        ui->tableCart->setItem(row, 0, new QTableWidgetItem(item.name));
+        QTableWidgetItem *nameItem = new QTableWidgetItem(item.name);
+        nameItem->setData(Qt::UserRole, item.souvenir_id);   // store souvenir ID
+        ui->tableCart->setItem(row, 0, nameItem);
+
         ui->tableCart->setItem(row, 1, new QTableWidgetItem(QString::number(item.quantity)));
         ui->tableCart->setItem(row, 2, new QTableWidgetItem("$" + QString::number(item.unit_price, 'f', 2)));
         ui->tableCart->setItem(row, 3, new QTableWidgetItem("$" + QString::number(subtotal, 'f', 2)));
@@ -217,31 +226,33 @@ void CartPage::on_btnAdd_clicked()
 
 void CartPage::on_btnRemove_clicked()
 {
-    QModelIndexList selectedRows = ui->tableCart->selectionModel()->selectedRows();
-    if (selectedRows.isEmpty())
-    {
-        QMessageBox::warning(this, "Remove Selected", "Please select a cart item first.");
+
+    int row = ui->tableCart->currentRow();
+
+    qDebug() << "Row:" << row;
+
+    if (row < 0) {
+        QMessageBox::warning(this, "Remove", "Please select an item first.");
         return;
     }
 
-    int row = selectedRows.first().row();
-    QVector<ShoppingCart::Item> items = m_cart.items_for_college(m_college_id);
+    int souvenir_id = ui->tableCart->item(row, 0)->data(Qt::UserRole).toInt();
 
-    if (row < 0 || row >= items.size())
-    {
-        QMessageBox::warning(this, "Remove Selected", "Invalid cart selection.");
-        return;
-    }
+    QString text = ui->qtyRemoveInput->text().trimmed();
+    if (text.isEmpty()) return;
 
-    bool ok = m_cart.remove(items[row].souvenir_id);
+    int removeQty = text.toInt();
+    if (removeQty <= 0) return;
 
-    if (!ok)
-    {
-        QMessageBox::warning(this, "Remove Selected", "Could not remove item.");
-        return;
-    }
+    int currentQty = m_cart.quantity(souvenir_id);
+
+    if (removeQty >= currentQty)
+        m_cart.remove(souvenir_id);          // remove all
+    else
+        m_cart.set_quantity(souvenir_id, currentQty - removeQty); // subtract
 
     refreshCart();
+    ui->qtyRemoveInput->setText("1");
 }
 
 void CartPage::on_btnClose_clicked()
@@ -285,13 +296,4 @@ void CartPage::on_btnClose_clicked()
     // 4. Otherwise, immediately load the next campus into the cart window
     int nextCollegeId = fullTrip[currentIndex];
     openForCollege(nextCollegeId);
-}
-
-void CartPage::clearCartAndRefresh()
-{
-    m_cart.clear();              // erase all stored items
-    ui->tableCart->setRowCount(0);
-
-    ui->labelCampusTotal->setText("Campus Total: $0.00");
-    ui->labelGrandTotal->setText("Grand Total: $0.00");
 }

@@ -19,7 +19,6 @@ public:
     ~CartPage();
 
     void openForCollege(int college_id);
-    void clearCartAndRefresh();
 
 private slots:
     void on_btnAdd_clicked();
