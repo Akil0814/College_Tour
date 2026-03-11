@@ -2,6 +2,7 @@
 #include "ui_trip_overview.h"
 #include "data_manager.h"
 #include "cart_page.h"
+#include "distance_tracker.h"
 #include <QMessageBox>
 
 trip_overview::trip_overview(ShoppingCart* cart, QWidget *parent)
@@ -18,6 +19,19 @@ trip_overview::trip_overview(ShoppingCart* cart, QWidget *parent)
         "color: #B41E28; "
         "font-family: 'Segoe UI';"
         );
+
+    DistanceTracker dt(DataManager::instance());
+    QVector<int> fullTrip = DataManager::instance()->get_current_trip();
+
+    for (int id : fullTrip) {
+        std::optional<QString> name = DataManager::instance()->get_college_name(id);
+        if (name.has_value()) {
+            dt.location_changed(name.value());
+        }
+    }
+
+    // Appended it directly to the existing title label!
+    ui->trip_overview_2->setText("Trip Overview | Total Distance: " + QString::number(dt.get_total_distance()) + " mi");
 
     // Style the Circles
     QString circleStyle =
@@ -100,8 +114,11 @@ void trip_overview::loadCurrentLeg()
     }
 
     if (startIndex + 5 >= fullTrip.size()) {
-        ui->nextButton->setText("Finish Trip");
+        // HIDE the button entirely so they have to click "Visit Campuses" to finish!
+        ui->nextButton->hide();
     } else {
+        // Show the button and set the text for the intermediate legs
+        ui->nextButton->show();
         ui->nextButton->setText("Start Next Leg");
     }
 }
